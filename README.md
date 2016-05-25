@@ -78,11 +78,16 @@ Optional
 Сделать реализация через Java 8 Stream API. Заменяйте forEach оператором stream.map(..)
 ```
 ### Ресурсы для подготовки к проекту 
-желательно иметь представление для лучшего усвоения материала
+> ВНИМАНИЕ: основы JavaSсript необходимы для понимания проекта, начиная с 8-го занятия!
 
-#### Git
-- <a href="https://git-scm.com/book/ru/v2">Книга Git</a>
-- <a href="https://www.youtube.com/playlist?list=PLIU76b8Cjem5B3sufBJ_KFTpKkMEvaTQR">Видео: продвинутый Git</a>
+Все остальное - опционально.
+
+#### HTML, JavaScript, CSS 
+- <a href="https://www.youtube.com/watch?v=j0ycGQKqMT4">Введение в программирование на JavaScript</a>
+-  <a href="http://www.intuit.ru/studies/courses/1102/134/info">Основы работы с HTML/CSS/JavaScript</a>
+-  <a href="http://itchief.ru/lessons/javascript/94-javascript-introduction">JavaScript - Основы</a>
+-  <a href="http://itchief.ru/lessons/bootstrap-3/19-introduction-to-twitter-bootstrap-3">Bootstrap 3 - Основы</a>
+-  <a href="http://anton.shevchuk.name/jquery/">jQuery для начинающих</a>
 
 #### Java (базовые вещи)
 - <a href="http://www.intuit.ru/studies/courses/16/16/info">Интуит. Программирование на Java</a>
@@ -98,13 +103,6 @@ Optional
 -  <a href="http://devcolibri.com/4284">Как создать Servlet? Полное руководство.</a>
 -  <a href="https://github.com/winterbe/java8-tutorial">A Guide to Java 8</a>
 -  <a href="http://javaxblog.ru/article/java-junit-1/">Java JUnit</a>
-
-#### HTML, JavaScript, CSS 
-- <a href="https://www.youtube.com/watch?v=j0ycGQKqMT4">Введение в программирование на JavaScript</a>
--  <a href="http://www.intuit.ru/studies/courses/1102/134/info">Основы работы с HTML/CSS/JavaScript</a>
--  <a href="http://itchief.ru/lessons/javascript/94-javascript-introduction">JavaScript - Основы</a>
--  <a href="http://itchief.ru/lessons/bootstrap-3/19-introduction-to-twitter-bootstrap-3">Bootstrap 3 - Основы</a>
--  <a href="http://anton.shevchuk.name/jquery/">jQuery для начинающих</a>
 
 #### JDBC, SQL
 -  <a href="https://www.youtube.com/playlist?list=PLIU76b8Cjem5qdMQLXiIwGLTLyUHkTqi2">Уроки по JDBC</a>
