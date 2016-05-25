@@ -61,7 +61,7 @@ Maven/ Spring/ Security/ JPA(Hibernate)/ REST(Jackson)/ Bootstrap(CSS)/ jQuery +
 Т.е UserMealWithExceed - это запись одной еды, но поле exceeded будет одинаково для всех записей за этот день.
     
 - Проверте результат выполнения ДЗ (можно проверить логику в http://topjava.herokuapp.com , список еды)
-- Оцените Time complexity вашего алгоритма (если он O(N*N)- попробуйте сделать O(N).
+- Оцените Time complexity вашего алгоритма, если он O(N*N)- попробуйте сделать O(N).
 ```
 Optional
 
