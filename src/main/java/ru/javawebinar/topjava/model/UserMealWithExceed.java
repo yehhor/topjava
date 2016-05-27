@@ -48,5 +48,6 @@ public class UserMealWithExceed implements Comparable<UserMealWithExceed>{
             return 21;
         else return 0;
     }
+
 }
 
