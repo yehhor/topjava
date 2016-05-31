@@ -48,7 +48,7 @@ public class UserMealsUtil {
                         UserMeal::getCalories,
                         (i, i1) -> i + i1));
         List<UserMealWithExceed> list = mealList.stream().
-                filter(userMeal -> TimeUtil.isBetween(userMeal.getDateTime().toLocalTime(), startTime, endTime)).
+                filter(userMeal -> userMeal != null && TimeUtil.isBetween(userMeal.getDateTime().toLocalTime(), startTime, endTime)).
                 map(userMeal -> new UserMealWithExceed(userMeal.getDateTime(),
                         userMeal.getDescription(), userMeal.getCalories(), map.get(userMeal.getDateTime().toLocalDate()) > caloriesPerDay)).
                 collect(Collectors.toList());
