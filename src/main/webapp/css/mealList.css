@@ -1,0 +1,45 @@
+body
+{
+    text-align: center;
+}
+table
+{
+    margin:0 auto;
+    border-spacing: 0 5px;
+    text-align: center;
+}
+.exceeded
+{
+    background-color: rgba(255, 42, 35, 0.43);
+}
+.normal
+{
+    background-color: rgba(54, 255, 0, 0.22);
+}
+.description
+{
+    width: 200px;
+}
+.cals
+{
+    width: 100px;
+}
+.date
+{
+    width: 150px;
+}
+input
+{
+    width:200px;
+}
+.add,
+.delete,
+.timeFilter
+{
+    display: inline-block;
+    text-align: center;
+    margin: 10px auto;
+    padding: 10px;
+    height: 100px;
+    vertical-align: middle;
+}
