@@ -1,13 +1,11 @@
 package ru.javawebinar.topjava.util;
 
-import ru.javawebinar.topjava.model.MealList;
 import ru.javawebinar.topjava.model.UserMeal;
 import ru.javawebinar.topjava.model.UserMealWithExceed;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.Month;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -17,14 +15,10 @@ import java.util.stream.Collectors;
  */
 public class UserMealsUtil {
 
-    private static LocalTime startTime = LocalTime.of(0,0);
-    private static LocalTime endTime = LocalTime.of(23,59);
-    private static int caloriesPerDay = 4500;
-
     public static void main(String[] args) {
     }
 
-    public static List<UserMealWithExceed> getFilteredWithExceeded(List<UserMeal> mealList) {
+    public static List<UserMealWithExceed> getFilteredWithExceeded(List<UserMeal> mealList, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
         Map<LocalDate, Integer> caloriesSumByDate = mealList.stream()
                 .collect(
                         Collectors.groupingBy(um -> um.getDateTime().toLocalDate(),
@@ -54,17 +48,5 @@ public class UserMealsUtil {
 
     public static UserMealWithExceed createWithExceed(UserMeal um, boolean exceeded) {
         return new UserMealWithExceed(um.getDateTime(), um.getDescription(), um.getCalories(), exceeded, um.getId());
-    }
-
-    public static void setStartTime(LocalTime startTime) {
-        UserMealsUtil.startTime = startTime;
-    }
-
-    public static void setEndTime(LocalTime endTime) {
-        UserMealsUtil.endTime = endTime;
-    }
-
-    public static void setCaloriesPerDay(int caloriesPerDay) {
-        UserMealsUtil.caloriesPerDay = caloriesPerDay;
     }
 }

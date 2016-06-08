@@ -2,7 +2,14 @@ body
 {
     text-align: center;
 }
-table
+.mainTable
+{
+    width: 1000px;
+    margin:0 auto;
+    border-spacing: 0 5px;
+    text-align: center;
+}
+.othertables
 {
     margin:0 auto;
     border-spacing: 0 5px;
@@ -16,24 +23,17 @@ table
 {
     background-color: rgba(54, 255, 0, 0.22);
 }
-.description
-{
-    width: 200px;
-}
-.cals
-{
-    width: 100px;
-}
-.date
-{
-    width: 150px;
-}
-input
+.textInput
 {
     width:200px;
 }
+.btn
+{
+    width: 80px;
+    margin: auto;
+    vertical-align: middle;
+}
 .add,
-.delete,
 .timeFilter
 {
     display: inline-block;
@@ -42,4 +42,8 @@ input
     padding: 10px;
     height: 100px;
     vertical-align: middle;
+}
+.editForm
+{
+    margin: 2px 0;
 }
