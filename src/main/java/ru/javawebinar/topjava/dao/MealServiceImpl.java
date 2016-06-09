@@ -15,11 +15,6 @@ public class MealServiceImpl implements CRUD {
         DataObject.putMeal(dateTime, description, calories);
     }
 
-    @Override
-    public void read() {
-
-    }
-
 
     @Override
     public void update(Integer id, LocalDateTime dateTime, String description, int calories) {

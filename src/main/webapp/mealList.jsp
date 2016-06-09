@@ -29,7 +29,7 @@ Header
                 </form>
             </td>
             <td class="item">
-                <form action="editMealForm.jsp?id=${item.id}" class="editForm">
+                <form action="editMealForm.jsp?id=${item.id}" class="editForm" method="GET">
                     <input class="btn" type="submit" value="edit">
                 </form>
             </td>
@@ -63,17 +63,6 @@ Header
     </form>
 
 </div>
-
-<%--<div class="delete">--%>
-<%--<form action="crud" method="POST">--%>
-<%--<span> delete meal </span>--%>
-<%--<br>--%>
-<%--user id: <input required type="text" name="uid"/> <br>--%>
-<%--<input type="hidden" value="delete" name="action"/>--%>
-<%--<input type="submit" value="delete"/>--%>
-<%--</form>--%>
-<%--</div>--%>
-
 <div class="timeFilter">
     <form action="crud" method="POST">
         <span> enter time period</span>
