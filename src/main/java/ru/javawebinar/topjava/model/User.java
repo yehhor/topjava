@@ -4,6 +4,7 @@ import ru.javawebinar.topjava.util.UserMealsUtil;
 
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -23,6 +24,8 @@ public class User extends NamedEntity {
     protected Set<Role> roles;
 
     protected int caloriesPerDay = UserMealsUtil.DEFAULT_CALORIES_PER_DAY;
+
+    private Set<UserMeal> mealList = new HashSet<>();
 
     public User() {
     }
@@ -82,6 +85,16 @@ public class User extends NamedEntity {
 
     public String getPassword() {
         return password;
+    }
+
+    public void addMeal(UserMeal meal)
+    {
+        mealList.add(meal);
+    }
+
+    public void removeMeal(UserMeal meal)
+    {
+        mealList.remove(meal);
     }
 
     @Override
