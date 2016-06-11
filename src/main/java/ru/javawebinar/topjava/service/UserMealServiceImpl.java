@@ -2,12 +2,13 @@ package ru.javawebinar.topjava.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.javawebinar.topjava.LoggedUser;
 import ru.javawebinar.topjava.model.UserMeal;
 import ru.javawebinar.topjava.repository.UserMealRepository;
-import ru.javawebinar.topjava.util.TimeUtil;
+import ru.javawebinar.topjava.util.exception.ExceptionUtil;
+import ru.javawebinar.topjava.util.exception.NotFoundException;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,16 +25,24 @@ public class UserMealServiceImpl implements UserMealService {
 
     @Override
     public UserMeal save(UserMeal userMeal) {
-        return repository.save(userMeal);
+        ExceptionUtil.checkNotFound(userMeal, "meal is null");
+        UserMeal userMealDB;
+        if (userMeal.isNew()) {
+            return repository.save(userMeal);
+        } else if ((userMealDB = repository.get(userMeal.getId())).getUserId() == LoggedUser.id()) {
+            userMeal.setUserId(userMealDB.getUserId());
+            return repository.save(userMeal);
+        } else
+            throw new NotFoundException("wrong userdId");
     }
 
     @Override
     public void delete(int id) {
-        repository.delete(id);
+        ExceptionUtil.checkNotFoundWithId(repository.delete(id), id);
     }
 
     public UserMeal get(int id) {
-        return repository.get(id);
+        return ExceptionUtil.checkNotFoundWithId(repository.get(id), id);
     }
 
     @Override
@@ -43,20 +52,30 @@ public class UserMealServiceImpl implements UserMealService {
     }
 
     @Override
-    public List<UserMeal> filterByTime(LocalTime startTime, LocalTime endTime) {
-        return repository.getAll().stream().
-                filter(u -> TimeUtil.isBetween(u.getDateTime().toLocalTime(), startTime, endTime)).
-                collect(Collectors.toList());
-    }
+    public List<UserMeal> filterByDateTime(String sDate, String sTime, String eDate, String eTime) {
+        LocalDate startDate, endDate;
+        LocalTime startTime, endTime;
+        if (sDate.isEmpty())
+            startDate = LocalDate.MIN;
+        else
+            startDate = LocalDate.parse(sDate);
 
-    @Override
-    public void filterByDateTime(LocalDateTime startTime, LocalDateTime endTime) {
-        //ToDo filterByDateTime
-    }
+        if (sTime.isEmpty())
+            startTime = LocalTime.MIN;
+        else
+            startTime = LocalTime.parse(sTime);
 
-    @Override
-    public void filterByDate(LocalDate startTime, LocalDate endTime) {
-        //ToDo FilterByDate
+        if (eDate.isEmpty())
+            endDate = LocalDate.now();
+        else
+            endDate = LocalDate.parse(eDate);
+
+        if (eTime.isEmpty())
+            endTime = LocalTime.MAX;
+        else
+            endTime = LocalTime.parse(eTime);
+
+        return repository.getFilteredList(startTime, startDate, endTime, endDate);
     }
 
     @Override

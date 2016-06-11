@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
  * 11.01.2015.
  */
 public class UserMeal extends BaseEntity{
-    private int userId;
+    private Integer userId;
 
     private Integer id;
 
@@ -49,7 +49,7 @@ public class UserMeal extends BaseEntity{
     }
 
     public boolean isNew() {
-        return id == null;
+        return id == null && userId == null;
     }
 
     public int getUserId() {

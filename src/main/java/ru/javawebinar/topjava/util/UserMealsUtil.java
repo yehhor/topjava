@@ -3,6 +3,8 @@ package ru.javawebinar.topjava.util;
 import ru.javawebinar.topjava.LoggedUser;
 import ru.javawebinar.topjava.model.UserMeal;
 import ru.javawebinar.topjava.to.UserMealWithExceed;
+import ru.javawebinar.topjava.util.exception.ExceptionUtil;
+import ru.javawebinar.topjava.util.exception.NotFoundException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -70,8 +72,8 @@ public class UserMealsUtil {
         return new UserMealWithExceed(um.getId(), um.getDateTime(), um.getDescription(), um.getCalories(), exceeded);
     }
 
-    public static boolean isMealToCurrentUser(UserMeal meal)
-    {
-        return meal.getUserId() == LoggedUser.id();
+    public static boolean isMealToCurrentUser(UserMeal meal) {
+
+        return ExceptionUtil.checkNotFound(meal, "no such meal").getUserId() == LoggedUser.id();
     }
 }

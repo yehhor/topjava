@@ -16,7 +16,10 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
 /**
@@ -39,22 +42,26 @@ public class MealServlet extends HttpServlet {
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
-        String id = request.getParameter("id");
-        UserMeal userMeal = new UserMeal(null,
-                LocalDateTime.parse(request.getParameter("dateTime")),
-                request.getParameter("description"),
-                Integer.valueOf(request.getParameter("calories")));
-        if(!id.isEmpty())
+        String action = request.getParameter("action");
+        if (action == null) {
+            String id = request.getParameter("id");
+            UserMeal userMeal = new UserMeal(id.isEmpty() ? null : Integer.parseInt(id),
+                    LocalDateTime.parse(request.getParameter("dateTime")),
+                    request.getParameter("description"),
+                    Integer.valueOf(request.getParameter("calories")));
+            LOG.info(userMeal.isNew() ? "Create {}" : "Update {}", userMeal);
+            userMealRestController.save(userMeal);
+            response.sendRedirect("meals");
+        } else if(action.equals("filter"))
         {
-            Integer idInt = Integer.parseInt(id);
-            userMeal.setId(idInt);
-            userMeal.setUserId(userMealRestController.get(idInt).getUserId());
-            //ToDo так как мы создаем новый юзер мил и пишем его поверх старого, тто юзерАйди трется -
-            //ToDo вопрос: делать присвоение нового юзер айди лучше здесь или в слое repository или совсем по-другому?
+
+            request.setAttribute("mealList", userMealRestController.filter(request.getParameter("startDate"),
+                    request.getParameter("startTime"),
+                    request.getParameter("endDate"),
+                    request.getParameter("endTime")));
+            request.getRequestDispatcher("/mealList.jsp").forward(request, response);
         }
-        LOG.info(userMeal.isNew() ? "Create {}" : "Update {}", userMeal);
-        userMealRestController.save(userMeal);
-        response.sendRedirect("meals");
+
     }
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -62,8 +69,7 @@ public class MealServlet extends HttpServlet {
         String action = request.getParameter("action");
         if (action == null) {
             LOG.info("getAll");
-            request.setAttribute("mealList",
-                    UserMealsUtil.getWithExceeded(userMealRestController.getAll(), UserMealsUtil.DEFAULT_CALORIES_PER_DAY));
+            request.setAttribute("mealList", userMealRestController.getAll());
             request.getRequestDispatcher("/mealList.jsp").forward(request, response);
         } else if (action.equals("delete")) {
             int id = getId(request);

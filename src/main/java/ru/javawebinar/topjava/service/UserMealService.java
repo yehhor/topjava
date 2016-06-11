@@ -2,9 +2,6 @@ package ru.javawebinar.topjava.service;
 
 import ru.javawebinar.topjava.model.UserMeal;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 
 /**
@@ -19,11 +16,7 @@ public interface UserMealService {
 
     List<UserMeal> getAll();
 
-    List<UserMeal> filterByTime(LocalTime startTime, LocalTime endTime);
-
-    void filterByDateTime(LocalDateTime startTime, LocalDateTime endTime);
-
-    void filterByDate(LocalDate startTime, LocalDate endTime);
+    List<UserMeal> filterByDateTime(String startDate, String startTime, String endDate, String endTime);
 
     void search();
 }

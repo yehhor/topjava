@@ -14,6 +14,7 @@
             color: red;
         }
     </style>
+    <link href="css/mealList.css" rel="stylesheet"/>
 </head>
 <body>
 <section>
@@ -46,6 +47,23 @@
             </tr>
         </c:forEach>
     </table>
+
+    <div class="filtration">
+        <form method="post" action="meals">
+               <div class="filter firstRow">
+                   From Date <input type="date" name="startDate">
+                   To Date <input type="date" name="endDate">
+               </div>
+               <div class="filter secondRow">
+                   From Time <input type="time" name="startTime">
+                   To Time <input type="time" name="endTime">
+               </div>
+               <div class="filter thirdRow">
+                   <input type="submit" value="filter" name="action">
+               </div>
+
+        </form>
+    </div>
 </section>
 </body>
 </html>

@@ -39,7 +39,6 @@ public class SpringMain {
 
             userMealRestController.getAll().forEach(System.out::println);
             System.out.println("********************* filtering next from 19 to 23 ****************");
-            userMealRestController.filterByTime(LocalTime.of(10, 0), LocalTime.of(13, 0)).forEach(System.out::println);
         }
     }
 }
