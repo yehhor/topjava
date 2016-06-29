@@ -1,7 +1,14 @@
 package ru.javawebinar.topjava.service;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.junit.rules.TestRule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
@@ -26,6 +33,31 @@ import static ru.javawebinar.topjava.UserTestData.USER_ID;
 @RunWith(SpringJUnit4ClassRunner.class)
 @Sql(scripts = "classpath:db/populateDB.sql", config = @SqlConfig(encoding = "UTF-8"))
 public class UserMealServiceTest {
+
+    private static final Logger LOG = LoggerFactory.getLogger(UserMealServiceTest.class);
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
+    @Rule
+    public TestRule watcher = new TestWatcher() {
+        private long time;
+
+
+        @Override
+        protected void starting(Description description) {
+            super.starting(description);
+            time = System.currentTimeMillis();
+        }
+
+        @Override
+        protected void finished(Description description) {
+            super.finished(description);
+            LOG.debug(description.getMethodName() + " time to complete the test : " +
+                    String.valueOf(System.currentTimeMillis() - time) + " millis");
+        }
+    };
+
 
     @Autowired
     protected UserMealService service;
@@ -66,8 +98,9 @@ public class UserMealServiceTest {
         MATCHER.assertEquals(updated, service.get(MEAL1_ID, USER_ID));
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test
     public void testNotFoundUpdate() throws Exception {
+        thrown.expect(NotFoundException.class);
         UserMeal item = service.get(MEAL1_ID, USER_ID);
         service.update(item, ADMIN_ID);
     }

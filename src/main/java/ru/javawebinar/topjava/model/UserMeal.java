@@ -1,8 +1,10 @@
 package ru.javawebinar.topjava.model;
 
 import org.hibernate.validator.constraints.NotEmpty;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 /**
@@ -10,31 +12,38 @@ import java.time.LocalDateTime;
  * 11.01.2015.
  */
 @NamedQueries({
-        @NamedQuery(name = UserMeal.DELETE, query = "DELETE FROM UserMeal u WHERE u.id=:id"),
-        @NamedQuery(name = UserMeal.GET, query = "SELECT u FROM UserMeal u WHERE u.user.id=:userId"),
-        @NamedQuery(name = User.ALL_SORTED, query = "SELECT u FROM UserMeal u ORDER BY u.dateTime")
+        @NamedQuery(name = UserMeal.DELETE, query = "DELETE FROM UserMeal u WHERE u.id=:id and u.user.id=:userId"),
+        @NamedQuery(name = UserMeal.UPDATE, query = "UPDATE UserMeal u SET u.calories=:calories, u.dateTime=:datetime," +
+                " u.description=:description WHERE u.id=:id AND u.user.id=:userId"),
+        @NamedQuery(name = UserMeal.GET, query = "SELECT u FROM UserMeal u WHERE u.user.id=:userId and u.id=:id"),
+        @NamedQuery(name = UserMeal.ALL_SORTED, query = "SELECT u FROM UserMeal u where u.user.id=:userId ORDER BY u.dateTime desc "),
+        @NamedQuery(name = UserMeal.GET_BETWEEN, query = "SELECT u FROM UserMeal u where u.dateTime between ?1 and ?2 and u.user.id=?3 ORDER BY u.dateTime desc ")
 })
 @Entity
-@Table(name = "meals")
+@Table(name = "meals", uniqueConstraints = @UniqueConstraint(columnNames = {"date_time", "user_id"}))
 public class UserMeal extends BaseEntity {
 
     public static final String DELETE = "UserMeal.delete";
+    public static final String UPDATE = "UserMeal.update";
     public static final String GET = "UserMeal.get";
     public static final String ALL_SORTED = "UserMeal.getAllSorted";
+    public static final String GET_BETWEEN = "UserMeal.getBetween";
 
-    @Column(name = "datetime", nullable = false)
-    @NotEmpty
+    @Column(name = "date_time", nullable = false)
+    @DateTimeFormat
+    @NotNull
     private LocalDateTime dateTime;
 
     @Column(name = "description", nullable = false)
-    @NotEmpty
+    @NotNull
     private String description;
 
     @Column(name = "calories", nullable = false)
-    @NotEmpty
+    @NotNull
     protected int calories;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
     private User user;
 
     public UserMeal() {
