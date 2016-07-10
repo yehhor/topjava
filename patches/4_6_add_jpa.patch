@@ -1,0 +1,402 @@
+Index: src/main/java/ru/javawebinar/topjava/repository/jpa/JpaUserMealRepositoryImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/repository/jpa/JpaUserMealRepositoryImpl.java	(revision )
++++ src/main/java/ru/javawebinar/topjava/repository/jpa/JpaUserMealRepositoryImpl.java	(revision )
+@@ -0,0 +1,42 @@
++package ru.javawebinar.topjava.repository.jpa;
++
++import org.springframework.stereotype.Repository;
++import ru.javawebinar.topjava.model.UserMeal;
++import ru.javawebinar.topjava.repository.UserMealRepository;
++
++import java.time.LocalDateTime;
++import java.util.List;
++
++/**
++ * User: gkisline
++ * Date: 26.08.2014
++ */
++
++@Repository
++public class JpaUserMealRepositoryImpl implements UserMealRepository {
++
++    @Override
++    public UserMeal save(UserMeal userMeal, int userId) {
++        return null;
++    }
++
++    @Override
++    public boolean delete(int id, int userId) {
++        return false;
++    }
++
++    @Override
++    public UserMeal get(int id, int userId) {
++        return null;
++    }
++
++    @Override
++    public List<UserMeal> getAll(int userId) {
++        return null;
++    }
++
++    @Override
++    public List<UserMeal> getBetween(LocalDateTime startDate, LocalDateTime endDate, int userId) {
++        return null;
++    }
++}
+\ No newline at end of file
+Index: src/main/java/ru/javawebinar/topjava/repository/jpa/JpaUserRepositoryImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/repository/jpa/JpaUserRepositoryImpl.java	(revision )
++++ src/main/java/ru/javawebinar/topjava/repository/jpa/JpaUserRepositoryImpl.java	(revision )
+@@ -0,0 +1,65 @@
++package ru.javawebinar.topjava.repository.jpa;
++
++import org.springframework.stereotype.Repository;
++import ru.javawebinar.topjava.model.User;
++import ru.javawebinar.topjava.repository.UserRepository;
++
++import javax.persistence.EntityManager;
++import javax.persistence.PersistenceContext;
++import javax.persistence.Query;
++import java.util.List;
++
++/**
++ * User: gkislin
++ * Date: 29.08.2014
++ */
++@Repository
++public class JpaUserRepositoryImpl implements UserRepository {
++
++/*
++    @Autowired
++    private SessionFactory sessionFactory;
++
++    private Session openSession() {
++        return sessionFactory.getCurrentSession();
++    }
++*/
++
++    @PersistenceContext
++    private EntityManager em;
++
++    @Override
++    public User save(User user) {
++        if (user.isNew()) {
++            em.persist(user);
++            return user;
++        } else {
++            return em.merge(user);
++        }
++    }
++
++    @Override
++    public User get(int id) {
++        return em.find(User.class, id);
++    }
++
++    @Override
++    public boolean delete(int id) {
++
++/*      User ref = em.getReference(User.class, id);
++        em.remove(ref);
++*/
++        Query query = em.createQuery("DELETE FROM User u WHERE u.id=:id");
++        return query.setParameter("id", id).executeUpdate() != 0;
++    }
++
++    @Override
++    public User getByEmail(String email) {
++        return null;
++    }
++
++    @Override
++    public List<User> getAll() {
++        return null;
++    }
++}
+Index: src/main/resources/db/postgres.properties
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/resources/db/postgres.properties	(date 1466434833000)
++++ src/main/resources/db/postgres.properties	(revision )
+@@ -7,3 +7,7 @@
+ database.password=password
+ 
+ database.init=true
++
++jpa.showSql=true
++hibernate.format_sql=true
++hibernate.use_sql_comments=true
+Index: src/main/java/ru/javawebinar/topjava/model/UserMeal.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/model/UserMeal.java	(date 1466434833000)
++++ src/main/java/ru/javawebinar/topjava/model/UserMeal.java	(revision )
+@@ -1,5 +1,7 @@
+ package ru.javawebinar.topjava.model;
+ 
++import javax.persistence.FetchType;
++import javax.persistence.ManyToOne;
+ import java.time.LocalDateTime;
+ 
+ /**
+@@ -12,8 +14,11 @@
+ 
+     private String description;
+ 
+-    private int calories;
++    protected int calories;
+ 
++    @ManyToOne(fetch = FetchType.LAZY)
++    private User user;
++
+     public UserMeal() {
+     }
+ 
+@@ -50,6 +55,14 @@
+ 
+     public void setCalories(int calories) {
+         this.calories = calories;
++    }
++
++    public User getUser() {
++        return user;
++    }
++
++    public void setUser(User user) {
++        this.user = user;
+     }
+ 
+     @Override
+Index: src/main/java/ru/javawebinar/topjava/model/BaseEntity.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/model/BaseEntity.java	(date 1466434833000)
++++ src/main/java/ru/javawebinar/topjava/model/BaseEntity.java	(revision )
+@@ -1,12 +1,19 @@
+ package ru.javawebinar.topjava.model;
+ 
++import javax.persistence.*;
++
+ /**
+  * User: gkislin
+  * Date: 22.08.2014
+  */
++@MappedSuperclass
++@Access(AccessType.FIELD)
+ public class BaseEntity {
+     public static final int START_SEQ = 100000;
+ 
++    @Id
++    @SequenceGenerator(name = "global_seq", sequenceName = "global_seq", allocationSize = 1)
++    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "global_seq")
+     protected Integer id;
+ 
+     public BaseEntity() {
+Index: src/main/java/ru/javawebinar/topjava/model/NamedEntity.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/model/NamedEntity.java	(date 1466434833000)
++++ src/main/java/ru/javawebinar/topjava/model/NamedEntity.java	(revision )
+@@ -1,11 +1,19 @@
+ package ru.javawebinar.topjava.model;
+ 
++import org.hibernate.validator.constraints.NotEmpty;
++
++import javax.persistence.Column;
++import javax.persistence.MappedSuperclass;
++
+ /**
+  * User: gkislin
+  * Date: 22.08.2014
+  */
++@MappedSuperclass
+ public class NamedEntity extends BaseEntity {
+ 
++    @NotEmpty
++    @Column(name = "name", nullable = false)
+     protected String name;
+ 
+     public NamedEntity() {
+Index: pom.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- pom.xml	(date 1466434833000)
++++ pom.xml	(revision )
+@@ -26,6 +26,10 @@
+         <postgresql.version>9.4.1208</postgresql.version>
+         <!--    Tests  -->
+         <junit.version>4.12</junit.version>
++
++        <!-- Hibernate -->
++        <hibernate.version>5.1.0.Final</hibernate.version>
++        <hibernate-validator.version>5.2.4.Final</hibernate-validator.version>
+     </properties>
+ 
+     <build>
+@@ -128,10 +132,30 @@
+         </dependency>
+         <dependency>
+             <groupId>org.springframework</groupId>
+-            <artifactId>spring-jdbc</artifactId>
++            <artifactId>spring-orm</artifactId>
+             <version>${spring.version}</version>
+         </dependency>
+-
++        <dependency>
++            <groupId>org.hibernate</groupId>
++            <artifactId>hibernate-entitymanager</artifactId>
++            <version>${hibernate.version}</version>
++        </dependency>
++        <dependency>
++            <groupId>javax.transaction</groupId>
++            <artifactId>jta</artifactId>
++            <version>1.1</version>
++            <scope>runtime</scope>
++        </dependency>
++        <dependency>
++            <groupId>org.hibernate</groupId>
++            <artifactId>hibernate-validator</artifactId>
++            <version>${hibernate-validator.version}</version>
++        </dependency>
++        <dependency>
++            <groupId>javax.el</groupId>
++            <artifactId>javax.el-api</artifactId>
++            <version>2.2.5</version>
++        </dependency>
+     </dependencies>
+ 
+     <profiles>
+Index: src/main/resources/spring/spring-db.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/resources/spring/spring-db.xml	(date 1466434833000)
++++ src/main/resources/spring/spring-db.xml	(revision )
+@@ -1,12 +1,14 @@
+ <beans xmlns="http://www.springframework.org/schema/beans"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+-       xmlns:context="http://www.springframework.org/schema/context" xmlns:jdbc="http://www.springframework.org/schema/jdbc"
++       xmlns:p="http://www.springframework.org/schema/p"
++       xmlns:context="http://www.springframework.org/schema/context"
++       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+        xsi:schemaLocation="http://www.springframework.org/schema/beans
+          http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd">
+ 
+     <context:property-placeholder location="classpath:db/postgres.properties" system-properties-mode="OVERRIDE"/>
+ 
+-    <context:component-scan base-package="ru.javawebinar.**.repository.jdbc"/>
++    <context:component-scan base-package="ru.javawebinar.**.repository.jpa"/>
+ 
+     <jdbc:initialize-database data-source="dataSource" enabled="${database.init}">
+         <jdbc:script location="classpath:db/initDB.sql"/>
+@@ -22,6 +24,28 @@
+         <property name="password" value="${database.password}"/>
+     </bean>
+ 
++    <bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean"
++          p:dataSource-ref="dataSource"
++          p:packagesToScan="ru.javawebinar.**.model">
++        <!--p:persistenceUnitName="persistenceUnit">-->
++
++        <property name="jpaPropertyMap">
++            <map>
++                <entry key="#{T(org.hibernate.cfg.AvailableSettings).FORMAT_SQL}" value="${hibernate.format_sql}"/>
++                <entry key="#{T(org.hibernate.cfg.AvailableSettings).USE_SQL_COMMENTS}" value="${hibernate.use_sql_comments}"/>
++                <!--<entry key="#{T(org.hibernate.cfg.AvailableSettings).HBM2DDL_AUTO}" value="${hibernate.hbm2ddl.auto}"/>-->
++            </map>
++        </property>
++
++        <property name="jpaVendorAdapter">
++            <bean class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter"
++                  p:showSql="${jpa.showSql}">
++            </bean>
++        </property>
++    </bean>
++
++<!--
++    <context:component-scan base-package="ru.javawebinar.**.repository.jdbc"/>
+     <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+         <constructor-arg ref="dataSource"/>
+     </bean>
+@@ -29,4 +53,5 @@
+     <bean id="namedJdbcTemplate" class="org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate">
+         <constructor-arg ref="dataSource"/>
+     </bean>
++-->
+ </beans>
+\ No newline at end of file
+Index: src/main/java/ru/javawebinar/topjava/model/User.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/model/User.java	(date 1466434833000)
++++ src/main/java/ru/javawebinar/topjava/model/User.java	(revision )
+@@ -2,6 +2,12 @@
+ 
+ import ru.javawebinar.topjava.util.UserMealsUtil;
+ 
++import org.hibernate.validator.constraints.Email;
++import org.hibernate.validator.constraints.Length;
++import org.hibernate.validator.constraints.NotEmpty;
++
++import javax.persistence.*;
++import javax.validation.constraints.Digits;
+ import java.util.Date;
+ import java.util.EnumSet;
+ import java.util.Set;
+@@ -10,18 +16,34 @@
+  * User: gkislin
+  * Date: 22.08.2014
+  */
++@Entity
++@Table(name = "users", uniqueConstraints = {@UniqueConstraint(columnNames = "email", name = "users_unique_email_idx")})
+ public class User extends NamedEntity {
+ 
++    @Column(name = "email", nullable = false, unique = true)
++    @Email
++    @NotEmpty
+     protected String email;
+ 
++    @Column(name = "password", nullable = false)
++    @NotEmpty
++    @Length(min = 5)
+     protected String password;
+ 
++    @Column(name = "enabled", nullable = false)
+     protected boolean enabled = true;
+ 
++    @Column(name = "registered", columnDefinition = "timestamp default now()")
+     protected Date registered = new Date();
+ 
++    @Enumerated(EnumType.STRING)
++    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
++    @Column(name = "role")
++    @ElementCollection(fetch = FetchType.EAGER)
+     protected Set<Role> roles;
+ 
++    @Column(name = "calories_per_day", columnDefinition = "default 2000")
++    @Digits(fraction = 0, integer = 4)
+     protected int caloriesPerDay = UserMealsUtil.DEFAULT_CALORIES_PER_DAY;
+ 
+     public User() {

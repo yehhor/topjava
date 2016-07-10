@@ -1,0 +1,171 @@
+Index: src/main/java/ru/javawebinar/topjava/repository/mock/InMemoryUserMealRepositoryImpl.java
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/repository/mock/InMemoryUserMealRepositoryImpl.java	(date 1465996980000)
++++ src/test/java/ru/javawebinar/topjava/repository/mock/InMemoryUserMealRepositoryImpl.java	(revision )
+@@ -13,8 +13,8 @@
+ import java.util.concurrent.atomic.AtomicInteger;
+ import java.util.stream.Collectors;
+ 
+-import static ru.javawebinar.topjava.repository.mock.InMemoryUserRepositoryImpl.ADMIN_ID;
+-import static ru.javawebinar.topjava.repository.mock.InMemoryUserRepositoryImpl.USER_ID;
++import static ru.javawebinar.topjava.UserTestData.ADMIN_ID;
++import static ru.javawebinar.topjava.UserTestData.USER_ID;
+ 
+ /**
+  * GKislin
+Index: src/main/java/ru/javawebinar/topjava/repository/mock/InMemoryUserRepositoryImpl.java
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/repository/mock/InMemoryUserRepositoryImpl.java	(date 1465996980000)
++++ src/test/java/ru/javawebinar/topjava/repository/mock/InMemoryUserRepositoryImpl.java	(revision )
+@@ -29,9 +29,6 @@
+ 
+     private static final Comparator<User> USER_COMPARATOR = Comparator.comparing(User::getName);
+ 
+-    public static final int USER_ID = 1;
+-    public static final int ADMIN_ID = 2;
+-
+     @Override
+     public User save(User user) {
+         Objects.requireNonNull(user);
+Index: src/test/java/ru/javawebinar/topjava/web/InMemoryAdminRestControllerTest.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/ru/javawebinar/topjava/web/InMemoryAdminRestControllerTest.java	(revision )
++++ src/test/java/ru/javawebinar/topjava/web/InMemoryAdminRestControllerTest.java	(revision )
+@@ -0,0 +1,55 @@
++package ru.javawebinar.topjava.web;
++
++import org.junit.*;
++import org.springframework.context.ConfigurableApplicationContext;
++import org.springframework.context.support.ClassPathXmlApplicationContext;
++import ru.javawebinar.topjava.UserTestData;
++import ru.javawebinar.topjava.model.User;
++import ru.javawebinar.topjava.repository.UserRepository;
++import ru.javawebinar.topjava.util.exception.NotFoundException;
++import ru.javawebinar.topjava.web.user.AdminRestController;
++
++import java.util.Arrays;
++import java.util.Collection;
++
++import static ru.javawebinar.topjava.UserTestData.ADMIN;
++import static ru.javawebinar.topjava.UserTestData.USER;
++
++public class InMemoryAdminRestControllerTest {
++    private static ConfigurableApplicationContext appCtx;
++    private static AdminRestController controller;
++
++    @BeforeClass
++    public static void beforeClass() {
++        appCtx = new ClassPathXmlApplicationContext("spring/spring-app.xml");
++        System.out.println("\n" + Arrays.toString(appCtx.getBeanDefinitionNames()) + "\n");
++        controller = appCtx.getBean(AdminRestController.class);
++    }
++
++    @AfterClass
++    public static void afterClass() {
++        appCtx.close();
++    }
++
++    @Before
++    public void setUp() throws Exception {
++        // Re-initialize
++        UserRepository repository = appCtx.getBean(UserRepository.class);
++        repository.getAll().forEach(u -> repository.delete(u.getId()));
++        repository.save(USER);
++        repository.save(ADMIN);
++    }
++
++    @Test
++    public void testDelete() throws Exception {
++        controller.delete(UserTestData.USER_ID);
++        Collection<User> users = controller.getAll();
++        Assert.assertEquals(users.size(), 1);
++        Assert.assertEquals(users.iterator().next(), ADMIN);
++    }
++
++    @Test(expected = NotFoundException.class)
++    public void testDeleteNotFound() throws Exception {
++        controller.delete(10);
++    }
++}
+\ No newline at end of file
+Index: src/test/java/ru/javawebinar/topjava/UserTestData.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/ru/javawebinar/topjava/UserTestData.java	(revision )
++++ src/test/java/ru/javawebinar/topjava/UserTestData.java	(revision )
+@@ -0,0 +1,16 @@
++package ru.javawebinar.topjava;
++
++import ru.javawebinar.topjava.model.Role;
++import ru.javawebinar.topjava.model.User;
++
++/**
++ * GKislin
++ * 24.09.2015.
++ */
++public class UserTestData {
++    public static final int USER_ID = 1;
++    public static final int ADMIN_ID = 2;
++
++    public static final User USER = new User(USER_ID, "User", "user@yandex.ru", "password", Role.ROLE_USER);
++    public static final User ADMIN = new User(ADMIN_ID, "Admin", "admin@gmail.com", "admin", Role.ROLE_ADMIN);
++}
+Index: pom.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- pom.xml	(date 1465996980000)
++++ pom.xml	(revision )
+@@ -21,6 +21,9 @@
+         <!-- Logging -->
+         <logback.version>1.1.7</logback.version>
+         <slf4j.version>1.7.21</slf4j.version>
++
++        <!--    Tests  -->
++        <junit.version>4.12</junit.version>
+     </properties>
+ 
+     <build>
+@@ -80,6 +83,14 @@
+                     <artifactId>commons-logging</artifactId>
+                 </exclusion>
+             </exclusions>
++        </dependency>
++
++        <!--Test-->
++        <dependency>
++            <groupId>junit</groupId>
++            <artifactId>junit</artifactId>
++            <version>${junit.version}</version>
++            <scope>test</scope>
+         </dependency>
+         <dependency>
+             <groupId>javax.servlet</groupId>
+Index: src/main/java/ru/javawebinar/topjava/SpringMain.java
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/SpringMain.java	(date 1465996980000)
++++ src/test/java/ru/javawebinar/topjava/SpringMain.java	(revision )
+@@ -2,8 +2,6 @@
+ 
+ import org.springframework.context.ConfigurableApplicationContext;
+ import org.springframework.context.support.ClassPathXmlApplicationContext;
+-import ru.javawebinar.topjava.model.Role;
+-import ru.javawebinar.topjava.model.User;
+ import ru.javawebinar.topjava.to.UserMealWithExceed;
+ import ru.javawebinar.topjava.web.meal.UserMealRestController;
+ import ru.javawebinar.topjava.web.user.AdminRestController;
+@@ -24,7 +22,7 @@
+         try (ConfigurableApplicationContext appCtx = new ClassPathXmlApplicationContext("spring/spring-app.xml")) {
+             System.out.println(Arrays.toString(appCtx.getBeanDefinitionNames()));
+             AdminRestController adminUserController = appCtx.getBean(AdminRestController.class);
+-            System.out.println(adminUserController.create(new User(1, "userName", "email", "password", Role.ROLE_ADMIN)));
++            System.out.println(adminUserController.create(UserTestData.USER));
+             System.out.println();
+ 
+             UserMealRestController mealController = appCtx.getBean(UserMealRestController.class);

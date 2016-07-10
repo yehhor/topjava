@@ -1,0 +1,349 @@
+Index: src/test/java/ru/javawebinar/topjava/repository/mock/InMemoryUserRepositoryImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/ru/javawebinar/topjava/repository/mock/InMemoryUserRepositoryImpl.java	(date 1466429732000)
++++ src/test/java/ru/javawebinar/topjava/repository/mock/InMemoryUserRepositoryImpl.java	(revision )
+@@ -3,6 +3,7 @@
+ import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
+ import org.springframework.stereotype.Repository;
++import org.springframework.util.Assert;
+ import ru.javawebinar.topjava.model.User;
+ import ru.javawebinar.topjava.repository.UserRepository;
+ 
+@@ -31,7 +32,7 @@
+ 
+     @Override
+     public User save(User user) {
+-        Objects.requireNonNull(user);
++        Assert.notNull(user, "user must not be null");
+         if (user.isNew()) {
+             user.setId(counter.incrementAndGet());
+         }
+@@ -68,7 +69,7 @@
+ 
+     @Override
+     public User getByEmail(String email) {
+-        Objects.requireNonNull(email);
++        Assert.notNull(email, "email must not be null");
+         return repository.values().stream()
+                 .filter(u -> email.equals(u.getEmail()))
+                 .findFirst()
+Index: src/main/java/ru/javawebinar/topjava/web/user/ProfileRestController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/web/user/ProfileRestController.java	(date 1466429732000)
++++ src/main/java/ru/javawebinar/topjava/web/user/ProfileRestController.java	(revision )
+@@ -1,7 +1,7 @@
+ package ru.javawebinar.topjava.web.user;
+ 
+ import org.springframework.stereotype.Controller;
+-import ru.javawebinar.topjava.LoggedUser;
++import ru.javawebinar.topjava.AuthorizedUser;
+ import ru.javawebinar.topjava.model.User;
+ 
+ /**
+@@ -12,14 +12,14 @@
+ public class ProfileRestController extends AbstractUserController {
+ 
+     public User get() {
+-        return super.get(LoggedUser.id());
++        return super.get(AuthorizedUser.id());
+     }
+ 
+     public void delete() {
+-        super.delete(LoggedUser.id());
++        super.delete(AuthorizedUser.id());
+     }
+ 
+     public void update(User user) {
+-        super.update(user, LoggedUser.id());
++        super.update(user, AuthorizedUser.id());
+     }
+ }
+\ No newline at end of file
+Index: src/main/java/ru/javawebinar/topjava/web/user/AbstractUserController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/web/user/AbstractUserController.java	(date 1466429732000)
++++ src/main/java/ru/javawebinar/topjava/web/user/AbstractUserController.java	(revision )
+@@ -12,40 +12,40 @@
+  * User: gkislin
+  */
+ public abstract class AbstractUserController {
+-    protected final Logger LOG = LoggerFactory.getLogger(getClass());
++    protected final Logger log = LoggerFactory.getLogger(getClass());
+ 
+     @Autowired
+     private UserService service;
+ 
+     public List<User> getAll() {
+-        LOG.info("getAll");
++        log.info("getAll");
+         return service.getAll();
+     }
+ 
+     public User get(int id) {
+-        LOG.info("get " + id);
++        log.info("get " + id);
+         return service.get(id);
+     }
+ 
+     public User create(User user) {
+         user.setId(null);
+-        LOG.info("create " + user);
++        log.info("create " + user);
+         return service.save(user);
+     }
+ 
+     public void delete(int id) {
+-        LOG.info("delete " + id);
++        log.info("delete " + id);
+         service.delete(id);
+     }
+ 
+     public void update(User user, int id) {
+         user.setId(id);
+-        LOG.info("update " + user);
++        log.info("update " + user);
+         service.update(user);
+     }
+ 
+     public User getByMail(String email) {
+-        LOG.info("getByEmail " + email);
++        log.info("getByEmail " + email);
+         return service.getByEmail(email);
+     }
+ }
+Index: src/main/java/ru/javawebinar/topjava/LoggedUser.java
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/LoggedUser.java	(date 1466429732000)
++++ src/main/java/ru/javawebinar/topjava/AuthorizedUser.java	(revision )
+@@ -8,7 +8,7 @@
+  * GKislin
+  * 06.03.2015.
+  */
+-public class LoggedUser {
++public class AuthorizedUser {
+     public static int id = BaseEntity.START_SEQ;
+ 
+     public static int id() {
+@@ -16,7 +16,7 @@
+     }
+ 
+     public static void setId(int id) {
+-        LoggedUser.id = id;
++        AuthorizedUser.id = id;
+     }
+ 
+     public static int getCaloriesPerDay() {
+Index: src/main/java/ru/javawebinar/topjava/util/TimeUtil.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/util/TimeUtil.java	(date 1466429732000)
++++ src/main/java/ru/javawebinar/topjava/util/TimeUtil.java	(revision )
+@@ -12,17 +12,20 @@
+  * 07.01.2015.
+  */
+ public class TimeUtil {
+-    private static final DateTimeFormatter DATE_TME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
++    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+ 
+     public static final LocalDate MIN_DATE = LocalDate.of(1, 1, 1);
+     public static final LocalDate MAX_DATE = LocalDate.of(3000, 1, 1);
+ 
++    private TimeUtil() {
++    }
++
+     public static <T extends Comparable<? super T>> boolean isBetween(T value, T start, T end) {
+         return value.compareTo(start) >= 0 && value.compareTo(end) <= 0;
+     }
+ 
+     public static String toString(LocalDateTime ldt) {
+-        return ldt == null ? "" : ldt.format(DATE_TME_FORMATTER);
++        return ldt == null ? "" : ldt.format(DATE_TIME_FORMATTER);
+     }
+ 
+     public static LocalDate parseLocalDate(String str) {
+Index: README.md
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- README.md	(date 1466429732000)
++++ README.md	(revision )
+@@ -1,6 +1,8 @@
+ Java Enterprise Online Project 
+ ===============================
+ 
++[![Codacy Badge](https://api.codacy.com/project/badge/Grade/fd10a882fc3048a2bbdc5c347fa4fac3)](https://www.codacy.com/app/javawebinar/topjava07)
++
+ Наиболее востребованные технологии /инструменты / фреймворки Java Enterprise:
+ Maven/ Spring/ Security/ JPA(Hibernate)/ REST(Jackson)/ Bootstrap(CSS)/ jQuery + plugins.
+ 
+Index: src/main/java/ru/javawebinar/topjava/util/exception/ExceptionUtil.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/util/exception/ExceptionUtil.java	(date 1466429732000)
++++ src/main/java/ru/javawebinar/topjava/util/exception/ExceptionUtil.java	(revision )
+@@ -6,6 +6,9 @@
+  * Date: 14.05.2014
+  */
+ public class ExceptionUtil {
++    private ExceptionUtil() {
++    }
++
+     public static void checkNotFoundWithId(boolean found, int id) {
+         checkNotFound(found, "id=" + id);
+     }
+@@ -20,6 +23,8 @@
+     }
+ 
+     public static void checkNotFound(boolean found, String msg) {
+-        if (!found) throw new NotFoundException("Not found entity with " + msg);
++        if (!found) {
++            throw new NotFoundException("Not found entity with " + msg);
++        }
+     }
+ }
+Index: src/main/java/ru/javawebinar/topjava/web/meal/UserMealRestController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/web/meal/UserMealRestController.java	(date 1466429732000)
++++ src/main/java/ru/javawebinar/topjava/web/meal/UserMealRestController.java	(revision )
+@@ -4,7 +4,7 @@
+ import org.slf4j.LoggerFactory;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.stereotype.Controller;
+-import ru.javawebinar.topjava.LoggedUser;
++import ru.javawebinar.topjava.AuthorizedUser;
+ import ru.javawebinar.topjava.model.UserMeal;
+ import ru.javawebinar.topjava.service.UserMealService;
+ import ru.javawebinar.topjava.to.UserMealWithExceed;
+@@ -27,45 +27,45 @@
+     private UserMealService service;
+ 
+     public UserMeal get(int id) {
+-        int userId = LoggedUser.id();
++        int userId = AuthorizedUser.id();
+         LOG.info("get meal {} for User {}", id, userId);
+         return service.get(id, userId);
+     }
+ 
+     public void delete(int id) {
+-        int userId = LoggedUser.id();
++        int userId = AuthorizedUser.id();
+         LOG.info("delete meal {} for User {}", id, userId);
+         service.delete(id, userId);
+     }
+ 
+     public List<UserMealWithExceed> getAll() {
+-        int userId = LoggedUser.id();
++        int userId = AuthorizedUser.id();
+         LOG.info("getAll for User {}", userId);
+-        return UserMealsUtil.getWithExceeded(service.getAll(userId), LoggedUser.getCaloriesPerDay());
++        return UserMealsUtil.getWithExceeded(service.getAll(userId), AuthorizedUser.getCaloriesPerDay());
+     }
+ 
+     public void update(UserMeal meal, int id) {
+         meal.setId(id);
+-        int userId = LoggedUser.id();
++        int userId = AuthorizedUser.id();
+         LOG.info("update {} for User {}", meal, userId);
+         service.update(meal, userId);
+     }
+ 
+     public UserMeal create(UserMeal meal) {
+         meal.setId(null);
+-        int userId = LoggedUser.id();
++        int userId = AuthorizedUser.id();
+         LOG.info("create {} for User {}", meal, userId);
+         return service.save(meal, userId);
+     }
+ 
+     public List<UserMealWithExceed> getBetween(LocalDate startDate, LocalTime startTime, LocalDate endDate, LocalTime endTime) {
+-        int userId = LoggedUser.id();
++        int userId = AuthorizedUser.id();
+         LOG.info("getBetween dates {} - {} for time {} - {} for User {}", startDate, endDate, startTime, endTime, userId);
+ 
+         return UserMealsUtil.getFilteredWithExceeded(
+                 service.getBetweenDates(
+                         startDate != null ? startDate : TimeUtil.MIN_DATE, endDate != null ? endDate : TimeUtil.MAX_DATE, userId),
+-                        startTime != null ? startTime : LocalTime.MIN, endTime != null ? endTime : LocalTime.MAX, LoggedUser.getCaloriesPerDay()
++                        startTime != null ? startTime : LocalTime.MIN, endTime != null ? endTime : LocalTime.MAX, AuthorizedUser.getCaloriesPerDay()
+         );
+     }
+ }
+\ No newline at end of file
+Index: src/test/java/ru/javawebinar/topjava/repository/mock/InMemoryUserMealRepositoryImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/ru/javawebinar/topjava/repository/mock/InMemoryUserMealRepositoryImpl.java	(date 1466429732000)
++++ src/test/java/ru/javawebinar/topjava/repository/mock/InMemoryUserMealRepositoryImpl.java	(revision )
+@@ -1,6 +1,7 @@
+ package ru.javawebinar.topjava.repository.mock;
+ 
+ import org.springframework.stereotype.Repository;
++import org.springframework.util.Assert;
+ import ru.javawebinar.topjava.model.UserMeal;
+ import ru.javawebinar.topjava.repository.UserMealRepository;
+ import ru.javawebinar.topjava.util.TimeUtil;
+@@ -38,7 +39,7 @@
+ 
+     @Override
+     public UserMeal save(UserMeal userMeal, int userId) {
+-        Objects.requireNonNull(userMeal);
++        Assert.notNull(userMeal, "userMeal must not be null");
+ 
+         Integer mealId = userMeal.getId();
+ 
+@@ -75,8 +76,8 @@
+ 
+     @Override
+     public Collection<UserMeal> getBetween(LocalDateTime startDateTime, LocalDateTime endDateTime, int userId) {
+-        Objects.requireNonNull(startDateTime);
+-        Objects.requireNonNull(endDateTime);
++        Assert.notNull(startDateTime, "startDateTime must not be null");
++        Assert.notNull(endDateTime, "endDateTime  must not be null");
+         return getAll(userId).stream()
+                 .filter(um -> TimeUtil.isBetween(um.getDateTime(), startDateTime, endDateTime))
+                 .collect(Collectors.toList());
+Index: src/main/java/ru/javawebinar/topjava/web/UserServlet.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/web/UserServlet.java	(date 1466429732000)
++++ src/main/java/ru/javawebinar/topjava/web/UserServlet.java	(revision )
+@@ -1,7 +1,7 @@
+ package ru.javawebinar.topjava.web;
+ 
+ import org.slf4j.Logger;
+-import ru.javawebinar.topjava.LoggedUser;
++import ru.javawebinar.topjava.AuthorizedUser;
+ 
+ import javax.servlet.ServletException;
+ import javax.servlet.http.HttpServlet;
+@@ -20,7 +20,7 @@
+ 
+     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+         int userId = Integer.valueOf(request.getParameter("userId"));
+-        LoggedUser.setId(userId);
++        AuthorizedUser.setId(userId);
+         response.sendRedirect("meals");
+     }
+ 

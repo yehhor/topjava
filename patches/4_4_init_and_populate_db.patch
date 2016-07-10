@@ -1,0 +1,167 @@
+Index: src/test/java/ru/javawebinar/topjava/service/UserMealServiceTest.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/ru/javawebinar/topjava/service/UserMealServiceTest.java	(date 1466434521000)
++++ src/test/java/ru/javawebinar/topjava/service/UserMealServiceTest.java	(revision )
+@@ -1,14 +1,14 @@
+ package ru.javawebinar.topjava.service;
+ 
+-import org.junit.Before;
+ import org.junit.Test;
+ import org.junit.runner.RunWith;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.test.context.ContextConfiguration;
++import org.springframework.test.context.jdbc.Sql;
++import org.springframework.test.context.jdbc.SqlConfig;
+ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+ import ru.javawebinar.topjava.MealTestData;
+ import ru.javawebinar.topjava.model.UserMeal;
+-import ru.javawebinar.topjava.util.DbPopulator;
+ import ru.javawebinar.topjava.util.exception.NotFoundException;
+ 
+ import java.time.LocalDate;
+@@ -24,18 +24,11 @@
+         "classpath:spring/spring-db.xml"
+ })
+ @RunWith(SpringJUnit4ClassRunner.class)
++@Sql(scripts = "classpath:db/populateDB.sql", config = @SqlConfig(encoding = "UTF-8"))
+ public class UserMealServiceTest {
+ 
+     @Autowired
+     protected UserMealService service;
+-
+-    @Autowired
+-    private DbPopulator dbPopulator;
+-
+-    @Before
+-    public void setUp() throws Exception {
+-        dbPopulator.execute();
+-    }
+ 
+     @Test
+     public void testDelete() throws Exception {
+\ No newline at end of file
+Index: src/main/resources/db/postgres.properties
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/resources/db/postgres.properties	(date 1466434521000)
++++ src/main/resources/db/postgres.properties	(revision )
+@@ -5,3 +5,5 @@
+ database.url=jdbc:postgresql://localhost:5432/topjava
+ database.username=user
+ database.password=password
++
++database.init=true
+Index: src/test/java/ru/javawebinar/topjava/service/UserServiceTest.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/ru/javawebinar/topjava/service/UserServiceTest.java	(date 1466434521000)
++++ src/test/java/ru/javawebinar/topjava/service/UserServiceTest.java	(revision )
+@@ -1,16 +1,16 @@
+ package ru.javawebinar.topjava.service;
+ 
+-import org.junit.Before;
+ import org.junit.Test;
+ import org.junit.runner.RunWith;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.dao.DataAccessException;
+ import org.springframework.test.context.ContextConfiguration;
++import org.springframework.test.context.jdbc.Sql;
++import org.springframework.test.context.jdbc.SqlConfig;
+ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+ import ru.javawebinar.topjava.UserTestData.*;
+ import ru.javawebinar.topjava.model.Role;
+ import ru.javawebinar.topjava.model.User;
+-import ru.javawebinar.topjava.util.DbPopulator;
+ import ru.javawebinar.topjava.util.exception.NotFoundException;
+ 
+ import java.util.Arrays;
+@@ -24,18 +24,11 @@
+         "classpath:spring/spring-db.xml"
+ })
+ @RunWith(SpringJUnit4ClassRunner.class)
++@Sql(scripts = "classpath:db/populateDB.sql", config = @SqlConfig(encoding = "UTF-8"))
+ public class UserServiceTest {
+ 
+     @Autowired
+     protected UserService service;
+-
+-    @Autowired
+-    private DbPopulator dbPopulator;
+-
+-    @Before
+-    public void setUp() throws Exception {
+-        dbPopulator.execute();
+-    }
+ 
+     @Test
+     public void testSave() throws Exception {
+\ No newline at end of file
+Index: src/main/java/ru/javawebinar/topjava/util/DbPopulator.java
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/util/DbPopulator.java	(date 1466434521000)
++++ src/main/java/ru/javawebinar/topjava/util/DbPopulator.java	(date 1466434521000)
+@@ -1,28 +0,0 @@
+-package ru.javawebinar.topjava.util;
+-
+-import org.springframework.beans.factory.annotation.Autowired;
+-import org.springframework.core.io.DefaultResourceLoader;
+-import org.springframework.core.io.ResourceLoader;
+-import org.springframework.jdbc.datasource.init.DatabasePopulatorUtils;
+-import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
+-
+-import javax.sql.DataSource;
+-
+-/**
+- * User: gkislin
+- * Date: 26.08.2014
+- */
+-public class DbPopulator extends ResourceDatabasePopulator {
+-    private static final ResourceLoader RESOURCE_LOADER = new DefaultResourceLoader();
+-
+-    @Autowired
+-    private DataSource dataSource;
+-
+-    public DbPopulator(String scriptLocation) {
+-        super(RESOURCE_LOADER.getResource(scriptLocation));
+-    }
+-
+-    public void execute() {
+-        DatabasePopulatorUtils.execute(this, dataSource);
+-    }
+-}
+Index: src/main/resources/spring/spring-db.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/resources/spring/spring-db.xml	(date 1466434521000)
++++ src/main/resources/spring/spring-db.xml	(revision )
+@@ -1,14 +1,15 @@
+ <beans xmlns="http://www.springframework.org/schema/beans"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+-       xmlns:context="http://www.springframework.org/schema/context"
++       xmlns:context="http://www.springframework.org/schema/context" xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+        xsi:schemaLocation="http://www.springframework.org/schema/beans
+-         http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
++         http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd">
+ 
+     <context:property-placeholder location="classpath:db/postgres.properties" system-properties-mode="OVERRIDE"/>
+ 
+-    <bean class="ru.javawebinar.topjava.util.DbPopulator">
+-        <constructor-arg name="scriptLocation" value="classpath:db/populateDB.sql"/>
+-    </bean>
++    <jdbc:initialize-database data-source="dataSource" enabled="${database.init}">
++        <jdbc:script location="classpath:db/initDB.sql"/>
++        <jdbc:script encoding="utf-8" location="classpath:db/populateDB.sql"/>
++    </jdbc:initialize-database>
+ 
+     <!--no pooling-->
+     <bean id="dataSource"
+\ No newline at end of file

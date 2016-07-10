@@ -1,0 +1,146 @@
+Index: src/main/java/ru/javawebinar/topjava/repository/jpa/JpaUserRepositoryImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/repository/jpa/JpaUserRepositoryImpl.java	(date 1466570948000)
++++ src/main/java/ru/javawebinar/topjava/repository/jpa/JpaUserRepositoryImpl.java	(revision )
+@@ -1,12 +1,12 @@
+ package ru.javawebinar.topjava.repository.jpa;
+ 
+ import org.springframework.stereotype.Repository;
++import org.springframework.transaction.annotation.Transactional;
+ import ru.javawebinar.topjava.model.User;
+ import ru.javawebinar.topjava.repository.UserRepository;
+ 
+ import javax.persistence.EntityManager;
+ import javax.persistence.PersistenceContext;
+-import javax.persistence.Query;
+ import java.util.List;
+ 
+ /**
+@@ -14,6 +14,7 @@
+  * Date: 29.08.2014
+  */
+ @Repository
++@Transactional(readOnly = true)
+ public class JpaUserRepositoryImpl implements UserRepository {
+ 
+ /*
+@@ -29,6 +30,7 @@
+     private EntityManager em;
+ 
+     @Override
++    @Transactional
+     public User save(User user) {
+         if (user.isNew()) {
+             em.persist(user);
+@@ -44,22 +46,25 @@
+     }
+ 
+     @Override
++    @Transactional
+     public boolean delete(int id) {
+ 
+ /*      User ref = em.getReference(User.class, id);
+         em.remove(ref);
+-*/
+-        Query query = em.createQuery("DELETE FROM User u WHERE u.id=:id");
++
++        Query<User> query = em.createQuery("DELETE FROM User u WHERE u.id=:id");
+         return query.setParameter("id", id).executeUpdate() != 0;
++*/
++        return em.createNamedQuery(User.DELETE).setParameter("id", id).executeUpdate() != 0;
+     }
+ 
+     @Override
+     public User getByEmail(String email) {
+-        return null;
++        return em.createNamedQuery(User.BY_EMAIL, User.class).setParameter(1, email).getSingleResult();
+     }
+ 
+     @Override
+     public List<User> getAll() {
+-        return null;
++        return em.createNamedQuery(User.ALL_SORTED, User.class).getResultList();
+     }
+ }
+Index: src/main/resources/spring/spring-db.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/resources/spring/spring-db.xml	(date 1466570948000)
++++ src/main/resources/spring/spring-db.xml	(revision )
+@@ -3,8 +3,11 @@
+        xmlns:p="http://www.springframework.org/schema/p"
+        xmlns:context="http://www.springframework.org/schema/context"
+        xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+-       xsi:schemaLocation="http://www.springframework.org/schema/beans
+-         http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd">
++       xmlns:tx="http://www.springframework.org/schema/tx"
++       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
++       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
++       http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
++       http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+ 
+     <context:property-placeholder location="classpath:db/postgres.properties" system-properties-mode="OVERRIDE"/>
+ 
+@@ -43,15 +46,21 @@
+             </bean>
+         </property>
+     </bean>
++
++    <tx:annotation-driven/>
++
++    <!-- Transaction manager for a single JPA EntityManagerFactory (alternative to JTA) -->
++    <bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager"
++          p:entityManagerFactory-ref="entityManagerFactory"/>
+ 
+-<!--
+-    <context:component-scan base-package="ru.javawebinar.**.repository.jdbc"/>
+-    <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+-        <constructor-arg ref="dataSource"/>
+-    </bean>
++    <!--
++        <context:component-scan base-package="ru.javawebinar.**.repository.jdbc"/>
++        <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
++            <constructor-arg ref="dataSource"/>
++        </bean>
+ 
+-    <bean id="namedJdbcTemplate" class="org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate">
+-        <constructor-arg ref="dataSource"/>
+-    </bean>
+--->
++        <bean id="namedJdbcTemplate" class="org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate">
++            <constructor-arg ref="dataSource"/>
++        </bean>
++    -->
+ </beans>
+\ No newline at end of file
+Index: src/main/java/ru/javawebinar/topjava/model/User.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/model/User.java	(date 1466570948000)
++++ src/main/java/ru/javawebinar/topjava/model/User.java	(revision )
+@@ -16,9 +16,18 @@
+  * User: gkislin
+  * Date: 22.08.2014
+  */
++@NamedQueries({
++        @NamedQuery(name = User.DELETE, query = "DELETE FROM User u WHERE u.id=:id"),
++        @NamedQuery(name = User.BY_EMAIL, query = "SELECT u FROM User u LEFT JOIN FETCH u.roles WHERE u.email=?1"),
++        @NamedQuery(name = User.ALL_SORTED, query = "SELECT u FROM User u LEFT JOIN FETCH u.roles ORDER BY u.name, u.email"),
++})
+ @Entity
+ @Table(name = "users", uniqueConstraints = {@UniqueConstraint(columnNames = "email", name = "users_unique_email_idx")})
+ public class User extends NamedEntity {
++
++    public static final String DELETE = "User.delete";
++    public static final String ALL_SORTED = "User.getAllSorted";
++    public static final String BY_EMAIL = "User.getByEmail";
+ 
+     @Column(name = "email", nullable = false, unique = true)
+     @Email

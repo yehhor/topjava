@@ -1,0 +1,278 @@
+Index: src/main/java/ru/javawebinar/topjava/repository/datajpa/ProxyUserMealRepository.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/repository/datajpa/ProxyUserMealRepository.java	(date 1467846126000)
++++ src/main/java/ru/javawebinar/topjava/repository/datajpa/ProxyUserMealRepository.java	(revision )
+@@ -30,4 +30,7 @@
+     @SuppressWarnings("JpaQlInspection")
+     @Query("SELECT m from UserMeal m WHERE m.user.id=:userId AND m.dateTime BETWEEN :startDate AND :endDate ORDER BY m.dateTime DESC")
+     List<UserMeal> getBetween(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, @Param("userId") int userId);
++
++    @Query("SELECT um FROM UserMeal um JOIN FETCH um.user WHERE um.id = ?1 and um.user.id = ?2")
++    UserMeal getWithUser(Integer id, Integer userId);
+ }
+Index: src/main/java/ru/javawebinar/topjava/repository/UserRepository.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/repository/UserRepository.java	(date 1467846126000)
++++ src/main/java/ru/javawebinar/topjava/repository/UserRepository.java	(revision )
+@@ -21,4 +21,8 @@
+     User getByEmail(String email);
+ 
+     List<User> getAll();
++
++    default User getWithMeals(int id){
++        throw new UnsupportedOperationException();
++    }
+ }
+Index: src/main/java/ru/javawebinar/topjava/service/UserService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/service/UserService.java	(date 1467846126000)
++++ src/main/java/ru/javawebinar/topjava/service/UserService.java	(revision )
+@@ -23,6 +23,8 @@
+     List<User> getAll();
+ 
+     void update(User user);
+-    
++
+     void evictCache();
++
++    User getWithMeals(int id);
+ }
+Index: src/test/java/ru/javawebinar/topjava/service/datajpa/DataJpaUserMealServiceTest.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/ru/javawebinar/topjava/service/datajpa/DataJpaUserMealServiceTest.java	(date 1467846126000)
++++ src/test/java/ru/javawebinar/topjava/service/datajpa/DataJpaUserMealServiceTest.java	(revision )
+@@ -1,10 +1,27 @@
+ package ru.javawebinar.topjava.service.datajpa;
+ 
++import org.junit.Test;
+ import org.springframework.test.context.ActiveProfiles;
++import ru.javawebinar.topjava.UserTestData;
++import ru.javawebinar.topjava.model.UserMeal;
+ import ru.javawebinar.topjava.service.AbstractUserMealServiceTest;
++import ru.javawebinar.topjava.util.exception.NotFoundException;
+ 
++import static ru.javawebinar.topjava.MealTestData.*;
+ import static ru.javawebinar.topjava.Profiles.DATAJPA;
++import static ru.javawebinar.topjava.UserTestData.ADMIN_ID;
+ 
+ @ActiveProfiles(DATAJPA)
+ public class DataJpaUserMealServiceTest extends AbstractUserMealServiceTest {
++    @Test
++    public void testGetWithUser() throws Exception {
++        UserMeal adminMeal = service.getWithUser(ADMIN_MEAL_ID, ADMIN_ID);
++        MATCHER.assertEquals(ADMIN_MEAL, adminMeal);
++        UserTestData.MATCHER.assertEquals(UserTestData.ADMIN, adminMeal.getUser());
++    }
++
++    @Test(expected = NotFoundException.class)
++    public void testGetWithUserNotFound() throws Exception {
++        service.getWithUser(MEAL1_ID, ADMIN_ID);
++    }
+ }
+\ No newline at end of file
+Index: src/main/java/ru/javawebinar/topjava/repository/datajpa/DataJpaUserMealRepositoryImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/repository/datajpa/DataJpaUserMealRepositoryImpl.java	(date 1467846126000)
++++ src/main/java/ru/javawebinar/topjava/repository/datajpa/DataJpaUserMealRepositoryImpl.java	(revision )
+@@ -50,4 +50,9 @@
+     public List<UserMeal> getBetween(LocalDateTime startDate, LocalDateTime endDate, int userId) {
+         return proxy.getBetween(startDate, endDate, userId);
+     }
++
++    @Override
++    public UserMeal getWithUser(Integer id, Integer userId) {
++        return proxy.getWithUser(id, userId);
++    }
+ }
+Index: src/main/java/ru/javawebinar/topjava/repository/datajpa/DataJpaUserRepositoryImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/repository/datajpa/DataJpaUserRepositoryImpl.java	(date 1467846126000)
++++ src/main/java/ru/javawebinar/topjava/repository/datajpa/DataJpaUserRepositoryImpl.java	(revision )
+@@ -42,4 +42,9 @@
+     public List<User> getAll() {
+         return proxy.findAll();
+     }
++
++    @Override
++    public User getWithMeals(int id) {
++        return proxy.getWithMeals(id);
++    }
+ }
+Index: src/test/java/ru/javawebinar/topjava/service/datajpa/DataJpaUserServiceTest.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/ru/javawebinar/topjava/service/datajpa/DataJpaUserServiceTest.java	(date 1467846126000)
++++ src/test/java/ru/javawebinar/topjava/service/datajpa/DataJpaUserServiceTest.java	(revision )
+@@ -1,10 +1,27 @@
+ package ru.javawebinar.topjava.service.datajpa;
+ 
++import org.junit.Test;
++import org.springframework.dao.DataAccessException;
+ import org.springframework.test.context.ActiveProfiles;
++import ru.javawebinar.topjava.MealTestData;
++import ru.javawebinar.topjava.model.User;
+ import ru.javawebinar.topjava.service.AbstractUserServiceTest;
++import ru.javawebinar.topjava.util.exception.NotFoundException;
+ 
+ import static ru.javawebinar.topjava.Profiles.DATAJPA;
++import static ru.javawebinar.topjava.UserTestData.*;
+ 
+ @ActiveProfiles(DATAJPA)
+ public class DataJpaUserServiceTest extends AbstractUserServiceTest {
++    @Test
++    public void testGetWithMeals() throws Exception {
++        User user = service.getWithMeals(USER_ID);
++        MATCHER.assertEquals(USER, user);
++        MealTestData.MATCHER.assertCollectionEquals(MealTestData.USER_MEALS, user.getMeals());
++    }
++
++    @Test(expected = NotFoundException.class)
++    public void testGetWithMealsNotFound() throws Exception {
++        service.getWithMeals(1);
++    }
+ }
+\ No newline at end of file
+Index: src/main/java/ru/javawebinar/topjava/service/UserMealServiceImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/service/UserMealServiceImpl.java	(date 1467846126000)
++++ src/main/java/ru/javawebinar/topjava/service/UserMealServiceImpl.java	(revision )
+@@ -48,4 +48,15 @@
+     public UserMeal save(UserMeal meal, int userId) {
+         return repository.save(meal, userId);
+     }
++
++//    @Autowired
++//    private UserRepository userRepository;
++
++    //    @Transactional
++    public UserMeal getWithUser(Integer id, Integer userId) {
++//        UserMeal meal = get(id, userId);
++//        meal.setUser(userRepository.get(userId));
++//        return meal;
++        return ExceptionUtil.checkNotFoundWithId(repository.getWithUser(id, userId), id);
++    }
+ }
+Index: src/main/java/ru/javawebinar/topjava/service/UserMealService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/service/UserMealService.java	(date 1467846126000)
++++ src/main/java/ru/javawebinar/topjava/service/UserMealService.java	(revision )
+@@ -28,4 +28,6 @@
+     UserMeal update(UserMeal meal, int userId) throws NotFoundException;
+ 
+     UserMeal save(UserMeal meal, int userId);
++
++    UserMeal getWithUser(Integer id, Integer userId);
+ }
+Index: src/main/java/ru/javawebinar/topjava/repository/datajpa/ProxyUserRepository.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/repository/datajpa/ProxyUserRepository.java	(date 1467846126000)
++++ src/main/java/ru/javawebinar/topjava/repository/datajpa/ProxyUserRepository.java	(revision )
+@@ -33,4 +33,7 @@
+     List<User> findAll();
+ 
+     User getByEmail(String email);
++
++    @Query("SELECT u FROM User u LEFT JOIN FETCH u.meals WHERE u.id = ?1")
++    User getWithMeals(Integer id);
+-}
++}
+\ No newline at end of file
+Index: src/main/java/ru/javawebinar/topjava/repository/UserMealRepository.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/repository/UserMealRepository.java	(date 1467846126000)
++++ src/main/java/ru/javawebinar/topjava/repository/UserMealRepository.java	(revision )
+@@ -24,4 +24,8 @@
+ 
+     // ORDERED dateTime
+     Collection<UserMeal> getBetween(LocalDateTime startDate, LocalDateTime endDate, int userId);
++
++    default UserMeal getWithUser(Integer id, Integer userId) {
++        throw new UnsupportedOperationException();
++    }
+ }
+Index: src/main/java/ru/javawebinar/topjava/model/User.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/model/User.java	(date 1467846126000)
++++ src/main/java/ru/javawebinar/topjava/model/User.java	(revision )
+@@ -10,6 +10,7 @@
+ import javax.validation.constraints.Digits;
+ import java.util.Date;
+ import java.util.EnumSet;
++import java.util.List;
+ import java.util.Set;
+ 
+ /**
+@@ -55,6 +56,10 @@
+     @Digits(fraction = 0, integer = 4)
+     protected int caloriesPerDay = UserMealsUtil.DEFAULT_CALORIES_PER_DAY;
+ 
++    @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY, mappedBy = "user")
++    @OrderBy("dateTime DESC")
++    protected List<UserMeal> meals;
++
+     public User() {
+     }
+ 
+@@ -117,6 +122,10 @@
+ 
+     public String getPassword() {
+         return password;
++    }
++
++    public List<UserMeal> getMeals() {
++        return meals;
+     }
+ 
+     @Override
+Index: src/main/java/ru/javawebinar/topjava/service/UserServiceImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/service/UserServiceImpl.java	(date 1467846126000)
++++ src/main/java/ru/javawebinar/topjava/service/UserServiceImpl.java	(revision )
+@@ -55,4 +55,9 @@
+     @Override
+     public void evictCache() {
+     }
++
++    @Override
++    public User getWithMeals(int id) {
++        return ExceptionUtil.checkNotFoundWithId(repository.getWithMeals(id), id);
++    }
+ }

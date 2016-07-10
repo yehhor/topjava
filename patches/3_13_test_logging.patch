@@ -1,0 +1,30 @@
+Index: src/test/resources/logback-test.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/resources/logback-test.xml	(revision )
++++ src/test/resources/logback-test.xml	(revision )
+@@ -0,0 +1,21 @@
++<configuration>
++
++    <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
++        <resetJUL>true</resetJUL>
++    </contextListener>
++
++    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
++        <encoder>
++            <charset>UTF-8</charset>
++            <pattern>%-5level %logger{0} - %msg%n</pattern>
++        </encoder>
++    </appender>
++
++    <logger name="org.springframework.jdbc" level="debug"/>
++    <logger name="ru.javawebinar.topjava" level="debug"/>
++
++    <root level="WARN">
++        <appender-ref ref="console"/>
++    </root>
++
++</configuration>
+\ No newline at end of file

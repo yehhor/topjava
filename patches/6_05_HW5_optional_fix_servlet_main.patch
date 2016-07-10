@@ -1,0 +1,70 @@
+Index: src/main/java/ru/javawebinar/topjava/web/MealServlet.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/web/MealServlet.java	(date 1467649311000)
++++ src/main/java/ru/javawebinar/topjava/web/MealServlet.java	(revision )
+@@ -2,8 +2,8 @@
+ 
+ import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
+-import org.springframework.context.ConfigurableApplicationContext;
+ import org.springframework.context.support.ClassPathXmlApplicationContext;
++import ru.javawebinar.topjava.Profiles;
+ import ru.javawebinar.topjava.model.UserMeal;
+ import ru.javawebinar.topjava.util.TimeUtil;
+ import ru.javawebinar.topjava.web.meal.UserMealRestController;
+@@ -26,13 +26,17 @@
+ public class MealServlet extends HttpServlet {
+     private static final Logger LOG = LoggerFactory.getLogger(MealServlet.class);
+ 
+-    private ConfigurableApplicationContext springContext;
++    private ClassPathXmlApplicationContext springContext;
+     private UserMealRestController mealController;
+ 
+     @Override
+     public void init(ServletConfig config) throws ServletException {
+         super.init(config);
+-        springContext = new ClassPathXmlApplicationContext("spring/spring-app.xml", "spring/spring-db.xml");
++        springContext = new ClassPathXmlApplicationContext(new String[]{"spring/spring-app.xml", "spring/spring-db.xml"}, false);
++//        springContext = new ClassPathXmlApplicationContext();
++        springContext.getEnvironment().setActiveProfiles(Profiles.ACTIVE_DB, Profiles.DB_IMPLEMENTATION);
++//        springContext.setConfigLocations("spring/spring-app.xml", "spring/spring-db.xml");
++        springContext.refresh();
+         mealController = springContext.getBean(UserMealRestController.class);
+     }
+ 
+Index: src/test/java/ru/javawebinar/topjava/SpringMain.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/ru/javawebinar/topjava/SpringMain.java	(date 1467649311000)
++++ src/test/java/ru/javawebinar/topjava/SpringMain.java	(revision )
+@@ -1,7 +1,6 @@
+ package ru.javawebinar.topjava;
+ 
+-import org.springframework.context.ConfigurableApplicationContext;
+-import org.springframework.context.support.ClassPathXmlApplicationContext;
++import org.springframework.context.support.GenericXmlApplicationContext;
+ import ru.javawebinar.topjava.to.UserMealWithExceed;
+ import ru.javawebinar.topjava.web.meal.UserMealRestController;
+ import ru.javawebinar.topjava.web.user.AdminRestController;
+@@ -19,10 +18,14 @@
+ public class SpringMain {
+     public static void main(String[] args) {
+         // java 7 Automatic resource management
+-        try (ConfigurableApplicationContext appCtx = new ClassPathXmlApplicationContext("spring/spring-app.xml","spring/mock.xml")) {
++        try (GenericXmlApplicationContext appCtx = new GenericXmlApplicationContext()) {
++            appCtx.getEnvironment().setActiveProfiles(Profiles.ACTIVE_DB, Profiles.DB_IMPLEMENTATION);
++            appCtx.load("spring/spring-app.xml", "spring/spring-db.xml");
++            appCtx.refresh();
++
+             System.out.println(Arrays.toString(appCtx.getBeanDefinitionNames()));
+             AdminRestController adminUserController = appCtx.getBean(AdminRestController.class);
+-            System.out.println(adminUserController.create(UserTestData.USER));
++            System.out.println(adminUserController.get(UserTestData.USER_ID));
+             System.out.println();
+ 
+             UserMealRestController mealController = appCtx.getBean(UserMealRestController.class);

@@ -1,0 +1,57 @@
+Index: src/main/java/ru/javawebinar/topjava/web/MealServlet.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/web/MealServlet.java	(date 1465999756000)
++++ src/main/java/ru/javawebinar/topjava/web/MealServlet.java	(revision )
+@@ -32,7 +32,7 @@
+     @Override
+     public void init(ServletConfig config) throws ServletException {
+         super.init(config);
+-        springContext = new ClassPathXmlApplicationContext("spring/spring-app.xml");
++        springContext = new ClassPathXmlApplicationContext("spring/spring-app.xml", "spring/spring-db.xml");
+         mealController = springContext.getBean(UserMealRestController.class);
+     }
+ 
+Index: src/main/java/ru/javawebinar/topjava/LoggedUser.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/LoggedUser.java	(date 1465999756000)
++++ src/main/java/ru/javawebinar/topjava/LoggedUser.java	(revision )
+@@ -2,12 +2,14 @@
+ 
+ import ru.javawebinar.topjava.util.UserMealsUtil;
+ 
++import ru.javawebinar.topjava.model.BaseEntity;
++
+ /**
+  * GKislin
+  * 06.03.2015.
+  */
+ public class LoggedUser {
+-    public static int id = 1;
++    public static int id = BaseEntity.START_SEQ;
+ 
+     public static int id() {
+         return id;
+Index: src/main/webapp/index.html
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/webapp/index.html	(date 1465999756000)
++++ src/main/webapp/index.html	(revision )
+@@ -10,8 +10,8 @@
+ <form method="post" action="users">
+     <b>Meal list of</b>
+     <select name="userId">
+-        <option value="1">User</option>
+-        <option value="2">Admin</option>
++        <option value="100000">User</option>
++        <option value="100001">Admin</option>
+     </select>
+     <button type="submit">Выбрать</button>
+ </form>

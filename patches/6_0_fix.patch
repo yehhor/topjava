@@ -1,0 +1,79 @@
+Index: src/main/java/ru/javawebinar/topjava/repository/datajpa/DataJpaUserRepositoryImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/repository/datajpa/DataJpaUserRepositoryImpl.java	(date 1467651509000)
++++ src/main/java/ru/javawebinar/topjava/repository/datajpa/DataJpaUserRepositoryImpl.java	(revision )
+@@ -1,7 +1,6 @@
+ package ru.javawebinar.topjava.repository.datajpa;
+ 
+ import org.springframework.beans.factory.annotation.Autowired;
+-import org.springframework.data.domain.Sort;
+ import org.springframework.stereotype.Repository;
+ import ru.javawebinar.topjava.model.User;
+ import ru.javawebinar.topjava.repository.UserRepository;
+@@ -15,7 +14,6 @@
+ 
+ @Repository
+ public class DataJpaUserRepositoryImpl implements UserRepository {
+-    private static final Sort SORT_NAME_EMAIL = new Sort("name", "email");
+ 
+     @Autowired
+     private ProxyUserRepository proxy;
+@@ -42,6 +40,6 @@
+ 
+     @Override
+     public List<User> getAll() {
+-        return proxy.findAll(SORT_NAME_EMAIL);
++        return proxy.findAll();
+     }
+ }
+Index: src/main/java/ru/javawebinar/topjava/repository/datajpa/ProxyUserRepository.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/repository/datajpa/ProxyUserRepository.java	(date 1467651509000)
++++ src/main/java/ru/javawebinar/topjava/repository/datajpa/ProxyUserRepository.java	(revision )
+@@ -1,6 +1,5 @@
+ package ru.javawebinar.topjava.repository.datajpa;
+ 
+-import org.springframework.data.domain.Sort;
+ import org.springframework.data.jpa.repository.JpaRepository;
+ import org.springframework.data.jpa.repository.Modifying;
+ import org.springframework.data.jpa.repository.Query;
+@@ -19,7 +18,6 @@
+ 
+     @Transactional
+     @Modifying
+-//    @Query(name = User.DELETE)
+     @Query("DELETE FROM User u WHERE u.id=:id")
+     int delete(@Param("id") int id);
+ 
+@@ -31,7 +29,8 @@
+     User findOne(Integer id);
+ 
+     @Override
+-    List<User> findAll(Sort sort);
++    @Query("SELECT u FROM User u LEFT JOIN FETCH u.roles ORDER BY u.name, u.email")
++    List<User> findAll();
+ 
+     User getByEmail(String email);
+ }
+Index: src/main/java/ru/javawebinar/topjava/model/User.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/model/User.java	(date 1467651509000)
++++ src/main/java/ru/javawebinar/topjava/model/User.java	(revision )
+@@ -48,7 +48,7 @@
+     @Enumerated(EnumType.STRING)
+     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
+     @Column(name = "role")
+-    @ElementCollection(fetch = FetchType.EAGER)
++    @ElementCollection(fetch = FetchType.LAZY)
+     protected Set<Role> roles;
+ 
+     @Column(name = "calories_per_day", columnDefinition = "default 2000")

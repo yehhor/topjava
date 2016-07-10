@@ -1,0 +1,48 @@
+Index: src/main/java/ru/javawebinar/topjava/web/UserServlet.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/web/UserServlet.java	(revision 543a5fca19c11a10a560a964587b61fa5f5134b6)
++++ src/main/java/ru/javawebinar/topjava/web/UserServlet.java	(revision 543a5fca19c11a10a560a964587b61fa5f5134b6)
+@@ -0,0 +1,18 @@
++package ru.javawebinar.topjava.web;
++
++import javax.servlet.ServletException;
++import javax.servlet.http.HttpServlet;
++import javax.servlet.http.HttpServletRequest;
++import javax.servlet.http.HttpServletResponse;
++import java.io.IOException;
++
++/**
++ * User: gkislin
++ * Date: 19.08.2014
++ */
++public class UserServlet extends HttpServlet {
++
++    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
++        request.getRequestDispatcher("/userList.jsp").forward(request, response);
++    }
++}
+Index: pom.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- pom.xml	(date 1456909639000)
++++ pom.xml	(date 1456909915000)
+@@ -34,6 +34,14 @@
+     </build>
+ 
+     <dependencies>
++
++        <!--Web-->
++        <dependency>
++            <groupId>javax.servlet</groupId>
++            <artifactId>servlet-api</artifactId>
++            <version>2.5</version>
++            <scope>provided</scope>
++        </dependency>
+     </dependencies>
+ 
+     <profiles>

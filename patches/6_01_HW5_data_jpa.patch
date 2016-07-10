@@ -1,0 +1,161 @@
+Index: src/main/java/ru/javawebinar/topjava/model/UserMeal.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/model/UserMeal.java	(revision a3f70b111294c652d050c164aa96bf1af2b04b99)
++++ src/main/java/ru/javawebinar/topjava/model/UserMeal.java	(revision )
+@@ -11,6 +11,7 @@
+  * GKislin
+  * 11.01.2015.
+  */
++@SuppressWarnings("JpaQlInspection")
+ @NamedQueries({
+         @NamedQuery(name = UserMeal.GET, query = "SELECT m FROM UserMeal m WHERE m.id=:id AND m.user.id=:userId"),
+         @NamedQuery(name = UserMeal.ALL_SORTED, query = "SELECT m FROM UserMeal m WHERE m.user.id=:userId ORDER BY m.dateTime DESC"),
+@@ -100,4 +101,4 @@
+                 ", calories=" + calories +
+                 '}';
+     }
+-}
++}
+\ No newline at end of file
+Index: src/main/java/ru/javawebinar/topjava/repository/datajpa/DataJpaUserMealRepositoryImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/repository/datajpa/DataJpaUserMealRepositoryImpl.java	(revision a3f70b111294c652d050c164aa96bf1af2b04b99)
++++ src/main/java/ru/javawebinar/topjava/repository/datajpa/DataJpaUserMealRepositoryImpl.java	(revision )
+@@ -1,6 +1,8 @@
+ package ru.javawebinar.topjava.repository.datajpa;
+ 
++import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.stereotype.Repository;
++import org.springframework.transaction.annotation.Transactional;
+ import ru.javawebinar.topjava.model.UserMeal;
+ import ru.javawebinar.topjava.repository.UserMealRepository;
+ 
+@@ -12,29 +14,40 @@
+  * 27.03.2015.
+  */
+ @Repository
+-public class DataJpaUserMealRepositoryImpl implements UserMealRepository{
++public class DataJpaUserMealRepositoryImpl implements UserMealRepository {
++    @Autowired
++    private ProxyUserMealRepository proxy;
++
++    @Autowired
++    private ProxyUserRepository userProxy;
++
+     @Override
++    @Transactional
+     public UserMeal save(UserMeal userMeal, int userId) {
++        if (!userMeal.isNew() && get(userMeal.getId(), userId) == null) {
+-        return null;
+-    }
++            return null;
++        }
++        userMeal.setUser(userProxy.getOne(userId));
++        return proxy.save(userMeal);
++    }
+ 
+     @Override
+     public boolean delete(int id, int userId) {
+-        return false;
++        return proxy.delete(id, userId) != 0;
+     }
+ 
+     @Override
+     public UserMeal get(int id, int userId) {
+-        return null;
++        return proxy.get(id, userId);
+     }
+ 
+     @Override
+     public List<UserMeal> getAll(int userId) {
+-        return null;
++        return proxy.getAll(userId);
+     }
+ 
+     @Override
+     public List<UserMeal> getBetween(LocalDateTime startDate, LocalDateTime endDate, int userId) {
+-        return null;
++        return proxy.getBetween(startDate, endDate, userId);
+     }
+ }
+Index: src/test/resources/logback-test.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/resources/logback-test.xml	(revision a3f70b111294c652d050c164aa96bf1af2b04b99)
++++ src/test/resources/logback-test.xml	(revision )
+@@ -11,7 +11,7 @@
+         </encoder>
+     </appender>
+ 
+-    <logger name="org.springframework.jdbc" level="debug"/>
++    <!--<logger name="org.springframework.jdbc" level="debug"/>-->
+     <logger name="ru.javawebinar.topjava" level="debug"/>
+ 
+     <root level="WARN">
+\ No newline at end of file
+Index: src/main/resources/logback.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/resources/logback.xml	(revision a3f70b111294c652d050c164aa96bf1af2b04b99)
++++ src/main/resources/logback.xml	(revision )
+@@ -26,6 +26,9 @@
+ 
+     <logger name="ru.javawebinar.topjava" level="debug"/>
+ 
++    <!--log hibernate showSql-->
++    <logger name="org.hibernate.SQL" level="debug"/>
++
+     <root level="info">
+         <appender-ref ref="file"/>
+         <appender-ref ref="console"/>
+Index: src/main/java/ru/javawebinar/topjava/repository/datajpa/ProxyUserMealRepository.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/repository/datajpa/ProxyUserMealRepository.java	(revision )
++++ src/main/java/ru/javawebinar/topjava/repository/datajpa/ProxyUserMealRepository.java	(revision )
+@@ -0,0 +1,33 @@
++package ru.javawebinar.topjava.repository.datajpa;
++
++import org.springframework.data.jpa.repository.JpaRepository;
++import org.springframework.data.jpa.repository.Modifying;
++import org.springframework.data.jpa.repository.Query;
++import org.springframework.data.repository.query.Param;
++import org.springframework.transaction.annotation.Transactional;
++import ru.javawebinar.topjava.model.UserMeal;
++
++import java.time.LocalDateTime;
++import java.util.List;
++
++@Transactional(readOnly = true)
++public interface ProxyUserMealRepository extends JpaRepository<UserMeal, Integer> {
++
++    @Modifying
++    @Transactional
++    @Query("DELETE FROM UserMeal m WHERE m.id=:id AND m.user.id=:userId")
++    int delete(@Param("id") int id, @Param("userId") int userId);
++
++    @Override
++    UserMeal save(UserMeal item);
++
++    @Query("SELECT m FROM UserMeal m WHERE m.id=:id AND m.user.id=:userId")
++    UserMeal get(@Param("id") int id, @Param("userId") int userId);
++
++    @Query("SELECT m FROM UserMeal m WHERE m.user.id=:userId ORDER BY m.dateTime DESC")
++    List<UserMeal> getAll(@Param("userId") int userId);
++
++    @SuppressWarnings("JpaQlInspection")
++    @Query("SELECT m from UserMeal m WHERE m.user.id=:userId AND m.dateTime BETWEEN :startDate AND :endDate ORDER BY m.dateTime DESC")
++    List<UserMeal> getBetween(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, @Param("userId") int userId);
++}

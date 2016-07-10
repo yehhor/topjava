@@ -1,0 +1,233 @@
+Index: src/main/java/ru/javawebinar/topjava/repository/datajpa/DataJpaUserMealRepositoryImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/repository/datajpa/DataJpaUserMealRepositoryImpl.java	(revision )
++++ src/main/java/ru/javawebinar/topjava/repository/datajpa/DataJpaUserMealRepositoryImpl.java	(revision )
+@@ -0,0 +1,40 @@
++package ru.javawebinar.topjava.repository.datajpa;
++
++import org.springframework.stereotype.Repository;
++import ru.javawebinar.topjava.model.UserMeal;
++import ru.javawebinar.topjava.repository.UserMealRepository;
++
++import java.time.LocalDateTime;
++import java.util.List;
++
++/**
++ * GKislin
++ * 27.03.2015.
++ */
++@Repository
++public class DataJpaUserMealRepositoryImpl implements UserMealRepository{
++    @Override
++    public UserMeal save(UserMeal userMeal, int userId) {
++        return null;
++    }
++
++    @Override
++    public boolean delete(int id, int userId) {
++        return false;
++    }
++
++    @Override
++    public UserMeal get(int id, int userId) {
++        return null;
++    }
++
++    @Override
++    public List<UserMeal> getAll(int userId) {
++        return null;
++    }
++
++    @Override
++    public List<UserMeal> getBetween(LocalDateTime startDate, LocalDateTime endDate, int userId) {
++        return null;
++    }
++}
+Index: src/main/java/ru/javawebinar/topjava/repository/datajpa/DataJpaUserRepositoryImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/repository/datajpa/DataJpaUserRepositoryImpl.java	(revision )
++++ src/main/java/ru/javawebinar/topjava/repository/datajpa/DataJpaUserRepositoryImpl.java	(revision )
+@@ -0,0 +1,47 @@
++package ru.javawebinar.topjava.repository.datajpa;
++
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.data.domain.Sort;
++import org.springframework.stereotype.Repository;
++import ru.javawebinar.topjava.model.User;
++import ru.javawebinar.topjava.repository.UserRepository;
++
++import java.util.List;
++
++/**
++ * GKislin
++ * 27.03.2015.
++ */
++
++@Repository
++public class DataJpaUserRepositoryImpl implements UserRepository {
++    private static final Sort SORT_NAME_EMAIL = new Sort("name", "email");
++
++    @Autowired
++    private ProxyUserRepository proxy;
++
++    @Override
++    public User save(User user) {
++        return proxy.save(user);
++    }
++
++    @Override
++    public boolean delete(int id) {
++        return proxy.delete(id) != 0;
++    }
++
++    @Override
++    public User get(int id) {
++        return proxy.findOne(id);
++    }
++
++    @Override
++    public User getByEmail(String email) {
++        return proxy.getByEmail(email);
++    }
++
++    @Override
++    public List<User> getAll() {
++        return proxy.findAll(SORT_NAME_EMAIL);
++    }
++}
+Index: src/main/java/ru/javawebinar/topjava/repository/datajpa/ProxyUserRepository.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/repository/datajpa/ProxyUserRepository.java	(revision )
++++ src/main/java/ru/javawebinar/topjava/repository/datajpa/ProxyUserRepository.java	(revision )
+@@ -0,0 +1,37 @@
++package ru.javawebinar.topjava.repository.datajpa;
++
++import org.springframework.data.domain.Sort;
++import org.springframework.data.jpa.repository.JpaRepository;
++import org.springframework.data.jpa.repository.Modifying;
++import org.springframework.data.jpa.repository.Query;
++import org.springframework.data.repository.query.Param;
++import org.springframework.transaction.annotation.Transactional;
++import ru.javawebinar.topjava.model.User;
++
++import java.util.List;
++
++/**
++ * GKislin
++ * 27.03.2015.
++ */
++@Transactional(readOnly = true)
++public interface ProxyUserRepository extends JpaRepository<User, Integer> {
++
++    @Transactional
++    @Modifying
++//    @Query(name = User.DELETE)
++    @Query("DELETE FROM User u WHERE u.id=:id")
++    int delete(@Param("id") int id);
++
++    @Override
++    @Transactional
++    User save(User user);
++
++    @Override
++    User findOne(Integer id);
++
++    @Override
++    List<User> findAll(Sort sort);
++
++    User getByEmail(String email);
++}
+Index: pom.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- pom.xml	(date 1467134400000)
++++ pom.xml	(revision )
+@@ -16,6 +16,7 @@
+         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+ 
++        <spring-data-jpa.version>1.10.2.RELEASE</spring-data-jpa.version>
+         <tomcat.version>8.0.33</tomcat.version>
+         <spring.version>4.2.6.RELEASE</spring.version>
+ 
+@@ -126,9 +127,9 @@
+         </dependency>
+ 
+         <dependency>
+-            <groupId>org.springframework</groupId>
+-            <artifactId>spring-orm</artifactId>
+-            <version>${spring.version}</version>
++            <groupId>org.springframework.data</groupId>
++            <artifactId>spring-data-jpa</artifactId>
++            <version>${spring-data-jpa.version}</version>
+         </dependency>
+         <dependency>
+             <groupId>org.hibernate</groupId>
+@@ -190,5 +191,14 @@
+     </profiles>
+ 
+     <dependencyManagement>
++        <dependencies>
++            <dependency>
++                <groupId>org.springframework</groupId>
++                <artifactId>spring-framework-bom</artifactId>
++                <version>${spring.version}</version>
++                <type>pom</type>
++                <scope>import</scope>
++            </dependency>
++        </dependencies>
+     </dependencyManagement>
+ </project>
+Index: src/main/resources/spring/spring-db.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/resources/spring/spring-db.xml	(date 1467134400000)
++++ src/main/resources/spring/spring-db.xml	(revision )
+@@ -4,13 +4,18 @@
+        xmlns:context="http://www.springframework.org/schema/context"
+        xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+        xmlns:tx="http://www.springframework.org/schema/tx"
++       xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+-       http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
++       http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
++       http://www.springframework.org/schema/data/jpa http://www.springframework.org/schema/data/jpa/spring-jpa.xsd">
+ 
+-    <context:component-scan base-package="ru.javawebinar.**.repository.jpa"/>
++    <!--<context:component-scan base-package="ru.javawebinar.**.repository.jpa"/>-->
+ 
++    <context:component-scan base-package="ru.javawebinar.**.repository.datajpa"/>
++    <jpa:repositories base-package="ru.javawebinar.**.repository.datajpa"/>
++
+     <jdbc:initialize-database data-source="dataSource" enabled="${database.init}">
+         <jdbc:script location="classpath:db/${jdbc.initLocation}"/>
+         <jdbc:script encoding="utf-8" location="classpath:db/populateDB.sql"/>
+@@ -74,5 +79,12 @@
+               p:url="${database.url}"
+               p:username="${database.username}"
+               p:password="${database.password}"/>
++    </beans>
++
++    <beans profile="jdbc">
++    </beans>
++    <beans profile="jpa">
++    </beans>
++    <beans profile="datajpa">
+     </beans>
+ </beans>
+\ No newline at end of file

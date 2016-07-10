@@ -1,0 +1,54 @@
+Index: src/main/resources/db/populateDB.sql
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/resources/db/populateDB.sql	(revision )
++++ src/main/resources/db/populateDB.sql	(revision )
+@@ -0,0 +1,13 @@
++DELETE FROM user_roles;
++DELETE FROM users;
++ALTER SEQUENCE global_seq RESTART WITH 100000;
++
++INSERT INTO users (name, email, password)
++VALUES ('User', 'user@yandex.ru', 'password');
++
++INSERT INTO users (name, email, password)
++VALUES ('Admin', 'admin@gmail.com', 'admin');
++
++INSERT INTO user_roles (role, user_id) VALUES
++  ('ROLE_USER', 100000),
++  ('ROLE_ADMIN', 100001);
+Index: src/main/resources/db/initDB.sql
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/resources/db/initDB.sql	(revision )
++++ src/main/resources/db/initDB.sql	(revision )
+@@ -0,0 +1,25 @@
++DROP TABLE IF EXISTS user_roles;
++DROP TABLE IF EXISTS users;
++DROP SEQUENCE IF EXISTS global_seq;
++
++CREATE SEQUENCE global_seq START 100000;
++
++CREATE TABLE users
++(
++  id         INTEGER PRIMARY KEY DEFAULT nextval('global_seq'),
++  name       VARCHAR NOT NULL,
++  email      VARCHAR NOT NULL,
++  password   VARCHAR NOT NULL,
++  registered TIMESTAMP DEFAULT now(),
++  enabled    BOOL DEFAULT TRUE,
++  calories_per_day INTEGER DEFAULT 2000 NOT NULL
++);
++CREATE UNIQUE INDEX users_unique_email_idx ON users (email);
++
++CREATE TABLE user_roles
++(
++  user_id INTEGER NOT NULL,
++  role    VARCHAR,
++  CONSTRAINT user_roles_idx UNIQUE (user_id, role),
++  FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
++);

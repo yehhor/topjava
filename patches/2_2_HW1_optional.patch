@@ -1,0 +1,398 @@
+Index: src/main/webapp/mealEdit.jsp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/webapp/mealEdit.jsp	(revision )
++++ src/main/webapp/mealEdit.jsp	(revision )
+@@ -0,0 +1,51 @@
++<%@ page contentType="text/html;charset=UTF-8" language="java" %>
++<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
++
++<html>
++<head>
++    <title>Meal</title>
++    <style>
++        dl {
++            background: none repeat scroll 0 0 #FAFAFA;
++            margin: 8px 0;
++            padding: 0;
++        }
++
++        dt {
++            display: inline-block;
++            width: 170px;
++        }
++
++        dd {
++            display: inline-block;
++            margin-left: 8px;
++            vertical-align: top;
++        }
++    </style>
++</head>
++<body>
++<section>
++    <h2><a href="">Home</a></h2>
++    <h3>Edit meal</h3>
++    <hr>
++    <jsp:useBean id="meal" type="ru.javawebinar.topjava.model.UserMeal" scope="request"/>
++    <form method="post" action="meals">
++        <input type="hidden" name="id" value="${meal.id}">
++        <dl>
++            <dt>DateTime:</dt>
++            <dd><input type="datetime-local" value="${meal.dateTime}" name="dateTime"></dd>
++        </dl>
++        <dl>
++            <dt>Description:</dt>
++            <dd><input type="text" value="${meal.description}" size=40 name="description"></dd>
++        </dl>
++        <dl>
++            <dt>Calories:</dt>
++            <dd><input type="number" value="${meal.calories}" name="calories"></dd>
++        </dl>
++        <button type="submit">Save</button>
++        <button onclick="window.history.back()">Cancel</button>
++    </form>
++</section>
++</body>
++</html>
+Index: src/main/java/ru/javawebinar/topjava/repository/InMemoryUserMealRepositoryImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/repository/InMemoryUserMealRepositoryImpl.java	(revision )
++++ src/main/java/ru/javawebinar/topjava/repository/InMemoryUserMealRepositoryImpl.java	(revision )
+@@ -0,0 +1,47 @@
++package ru.javawebinar.topjava.repository;
++
++import ru.javawebinar.topjava.model.UserMeal;
++import ru.javawebinar.topjava.util.UserMealsUtil;
++
++import java.util.Collection;
++import java.util.Map;
++import java.util.concurrent.ConcurrentHashMap;
++import java.util.concurrent.atomic.AtomicInteger;
++
++/**
++ * GKislin
++ * 15.09.2015.
++ */
++public class InMemoryUserMealRepositoryImpl implements UserMealRepository {
++    private Map<Integer, UserMeal> repository = new ConcurrentHashMap<>();
++    private AtomicInteger counter = new AtomicInteger(0);
++
++    {
++        UserMealsUtil.MEAL_LIST.forEach(this::save);
++    }
++
++    @Override
++    public UserMeal save(UserMeal userMeal) {
++        if (userMeal.isNew()) {
++            userMeal.setId(counter.incrementAndGet());
++        }
++        repository.put(userMeal.getId(), userMeal);
++        return userMeal;
++    }
++
++    @Override
++    public void delete(int id) {
++        repository.remove(id);
++    }
++
++    @Override
++    public UserMeal get(int id) {
++        return repository.get(id);
++    }
++
++    @Override
++    public Collection<UserMeal> getAll() {
++        return repository.values();
++    }
++}
++
+Index: src/main/java/ru/javawebinar/topjava/repository/UserMealRepository.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/repository/UserMealRepository.java	(revision )
++++ src/main/java/ru/javawebinar/topjava/repository/UserMealRepository.java	(revision )
+@@ -0,0 +1,19 @@
++package ru.javawebinar.topjava.repository;
++
++import ru.javawebinar.topjava.model.UserMeal;
++
++import java.util.Collection;
++
++/**
++ * GKislin
++ * 06.03.2015.
++ */
++public interface UserMealRepository {
++    UserMeal save(UserMeal userMeal);
++
++    void delete(int id);
++
++    UserMeal get(int id);
++
++    Collection<UserMeal> getAll();
++}
+Index: src/main/java/ru/javawebinar/topjava/model/UserMeal.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/model/UserMeal.java	(date 1465161605000)
++++ src/main/java/ru/javawebinar/topjava/model/UserMeal.java	(revision )
+@@ -7,18 +7,29 @@
+  * 11.01.2015.
+  */
+ public class UserMeal {
+-    protected final LocalDateTime dateTime;
++    private Integer id;
+ 
+-    protected final String description;
++    private final LocalDateTime dateTime;
+ 
+-    protected final int calories;
++    private final String description;
+ 
++    private final int calories;
++
+     public UserMeal(LocalDateTime dateTime, String description, int calories) {
++        this(null, dateTime, description, calories);
++    }
++
++    public UserMeal(Integer id, LocalDateTime dateTime, String description, int calories) {
++        this.id = id;
+         this.dateTime = dateTime;
+         this.description = description;
+         this.calories = calories;
+     }
+ 
++    public void setId(int id) {
++        this.id = id;
++    }
++
+     public LocalDateTime getDateTime() {
+         return dateTime;
+     }
+@@ -29,5 +40,23 @@
+ 
+     public int getCalories() {
+         return calories;
++    }
++
++    public Integer getId() {
++        return id;
++    }
++
++    public boolean isNew() {
++        return id == null;
++    }
++
++    @Override
++    public String toString() {
++        return "UserMeal{" +
++                "id=" + id +
++                ", dateTime=" + dateTime +
++                ", description='" + description + '\'' +
++                ", calories=" + calories +
++                '}';
+     }
+ }
+Index: src/main/java/ru/javawebinar/topjava/web/MealServlet.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/web/MealServlet.java	(date 1465161605000)
++++ src/main/java/ru/javawebinar/topjava/web/MealServlet.java	(revision )
+@@ -2,13 +2,19 @@
+ 
+ import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
++import ru.javawebinar.topjava.model.UserMeal;
++import ru.javawebinar.topjava.repository.InMemoryUserMealRepositoryImpl;
++import ru.javawebinar.topjava.repository.UserMealRepository;
+ import ru.javawebinar.topjava.util.UserMealsUtil;
+ 
++import javax.servlet.ServletConfig;
+ import javax.servlet.ServletException;
+ import javax.servlet.http.HttpServlet;
+ import javax.servlet.http.HttpServletRequest;
+ import javax.servlet.http.HttpServletResponse;
+ import java.io.IOException;
++import java.time.LocalDateTime;
++import java.util.Objects;
+ 
+ /**
+  * User: gkislin
+@@ -17,9 +23,50 @@
+ public class MealServlet extends HttpServlet {
+     private static final Logger LOG = LoggerFactory.getLogger(MealServlet.class);
+ 
++    private UserMealRepository repository;
++
++    @Override
++    public void init(ServletConfig config) throws ServletException {
++        super.init(config);
++        repository = new InMemoryUserMealRepositoryImpl();
++    }
++
++    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
++        request.setCharacterEncoding("UTF-8");
++        String id = request.getParameter("id");
++        UserMeal userMeal = new UserMeal(id.isEmpty() ? null : Integer.valueOf(id),
++                LocalDateTime.parse(request.getParameter("dateTime")),
++                request.getParameter("description"),
++                Integer.valueOf(request.getParameter("calories")));
++        LOG.info(userMeal.isNew() ? "Create {}" : "Update {}", userMeal);
++        repository.save(userMeal);
++        response.sendRedirect("meals");
++    }
++
+     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
++        String action = request.getParameter("action");
++
++        if (action == null) {
+-        LOG.info("getAll");
++            LOG.info("getAll");
+-        request.setAttribute("mealList", UserMealsUtil.getWithExceeded(UserMealsUtil.MEAL_LIST, UserMealsUtil.DEFAULT_CALORIES_PER_DAY));
++            request.setAttribute("mealList",
++                    UserMealsUtil.getWithExceeded(repository.getAll(), UserMealsUtil.DEFAULT_CALORIES_PER_DAY));
+-        request.getRequestDispatcher("/mealList.jsp").forward(request, response);
++            request.getRequestDispatcher("/mealList.jsp").forward(request, response);
++        } else if (action.equals("delete")) {
++            int id = getId(request);
++            LOG.info("Delete {}", id);
++            repository.delete(id);
++            response.sendRedirect("meals");
++        } else if (action.equals("create") || action.equals("update")) {
++            final UserMeal meal = action.equals("create") ?
++                    new UserMeal(LocalDateTime.now().withNano(0).withSecond(0), "", 1000) :
++                    repository.get(getId(request));
++            request.setAttribute("meal", meal);
++            request.getRequestDispatcher("mealEdit.jsp").forward(request, response);
++        }
++    }
++
++    private int getId(HttpServletRequest request) {
++        String paramId = Objects.requireNonNull(request.getParameter("id"));
++        return Integer.valueOf(paramId);
+     }
+ }
+Index: src/main/java/ru/javawebinar/topjava/util/UserMealsUtil.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/util/UserMealsUtil.java	(date 1465161605000)
++++ src/main/java/ru/javawebinar/topjava/util/UserMealsUtil.java	(revision )
+@@ -33,11 +33,11 @@
+         System.out.println(getFilteredWithExceededByCycle(MEAL_LIST, LocalTime.of(7, 0), LocalTime.of(12, 0), DEFAULT_CALORIES_PER_DAY));
+     }
+ 
+-    public static List<UserMealWithExceed> getWithExceeded(List<UserMeal> mealList, int caloriesPerDay) {
++    public static List<UserMealWithExceed> getWithExceeded(Collection<UserMeal> mealList, int caloriesPerDay) {
+         return getFilteredWithExceeded(mealList, LocalTime.MIN, LocalTime.MAX, caloriesPerDay);
+     }
+ 
+-    public static List<UserMealWithExceed> getFilteredWithExceeded(List<UserMeal> mealList, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
++    public static List<UserMealWithExceed> getFilteredWithExceeded(Collection<UserMeal> mealList, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
+         Map<LocalDate, Integer> caloriesSumByDate = mealList.stream()
+                 .collect(
+                         Collectors.groupingBy(um -> um.getDateTime().toLocalDate(),
+@@ -66,6 +66,6 @@
+     }
+ 
+     public static UserMealWithExceed createWithExceed(UserMeal um, boolean exceeded) {
+-        return new UserMealWithExceed(um.getDateTime(), um.getDescription(), um.getCalories(), exceeded);
++        return new UserMealWithExceed(um.getId(), um.getDateTime(), um.getDescription(), um.getCalories(), exceeded);
+     }
+ }
+\ No newline at end of file
+Index: src/main/java/ru/javawebinar/topjava/model/UserMealWithExceed.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/model/UserMealWithExceed.java	(date 1465161605000)
++++ src/main/java/ru/javawebinar/topjava/model/UserMealWithExceed.java	(revision )
+@@ -7,6 +7,8 @@
+  * 11.01.2015.
+  */
+ public class UserMealWithExceed {
++    private final Integer id;
++
+     private final LocalDateTime dateTime;
+ 
+     private final String description;
+@@ -16,12 +18,21 @@
+     private final boolean exceed;
+ 
+     public UserMealWithExceed(LocalDateTime dateTime, String description, int calories, boolean exceed) {
++        this(null, dateTime, description, calories, exceed);
++    }
++
++    public UserMealWithExceed(Integer id, LocalDateTime dateTime, String description, int calories, boolean exceed) {
++        this.id = id;
+         this.dateTime = dateTime;
+         this.description = description;
+         this.calories = calories;
+         this.exceed = exceed;
+     }
+ 
++    public Integer getId() {
++        return id;
++    }
++
+     public LocalDateTime getDateTime() {
+         return dateTime;
+     }
+@@ -41,7 +52,8 @@
+     @Override
+     public String toString() {
+         return "UserMealWithExceed{" +
+-                "dateTime=" + dateTime +
++                "id=" + id +
++                ", dateTime=" + dateTime +
+                 ", description='" + description + '\'' +
+                 ", calories=" + calories +
+                 ", exceed=" + exceed +
+Index: src/main/webapp/mealList.jsp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/webapp/mealList.jsp	(date 1465161605000)
++++ src/main/webapp/mealList.jsp	(revision )
+@@ -19,6 +19,7 @@
+ <section>
+     <h2><a href="index.html">Home</a></h2>
+     <h3>Meal list</h3>
++    <a href="meals?action=create">Add Meal</a>
+     <hr>
+     <table border="1" cellpadding="8" cellspacing="0">
+         <thead>
+@@ -26,6 +27,8 @@
+             <th>Date</th>
+             <th>Description</th>
+             <th>Calories</th>
++            <th></th>
++            <th></th>
+         </tr>
+         </thead>
+         <c:forEach items="${mealList}" var="meal">
+@@ -37,6 +40,8 @@
+                 </td>
+                 <td>${meal.description}</td>
+                 <td>${meal.calories}</td>
++                <td><a href="meals?action=update&id=${meal.id}">Update</a></td>
++                <td><a href="meals?action=delete&id=${meal.id}">Delete</a></td>
+             </tr>
+         </c:forEach>
+     </table>
+\ No newline at end of file

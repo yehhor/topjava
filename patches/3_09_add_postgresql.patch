@@ -1,0 +1,45 @@
+Index: src/main/resources/db/postgres.properties
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>NATIVE_TO_ASCII_UTF-8
+===================================================================
+--- src/main/resources/db/postgres.properties	(revision )
++++ src/main/resources/db/postgres.properties	(revision )
+@@ -0,0 +1,7 @@
++#database.url=jdbc:postgresql://ec2-54-217-202-110.eu-west-1.compute.amazonaws.com:5432/dehm6lvm8bink0?ssl=true&sslfactory=org.postgresql.ssl.NonValidatingFactory
++#database.username=wegxlfzjjgxaxy
++#database.password=SSQyKKE_e93kiUCR-ehzMcKCxZ
++
++database.url=jdbc:postgresql://localhost:5432/topjava
++database.username=user
++database.password=password
+Index: pom.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- pom.xml	(date 1465997620000)
++++ pom.xml	(revision )
+@@ -22,6 +22,8 @@
+         <logback.version>1.1.7</logback.version>
+         <slf4j.version>1.7.21</slf4j.version>
+ 
++        <!--DB-->
++        <postgresql.version>9.4.1208</postgresql.version>
+         <!--    Tests  -->
+         <junit.version>4.12</junit.version>
+     </properties>
+@@ -83,6 +85,13 @@
+                     <artifactId>commons-logging</artifactId>
+                 </exclusion>
+             </exclusions>
++        </dependency>
++
++        <!--DataBase-->
++        <dependency>
++            <groupId>org.postgresql</groupId>
++            <artifactId>postgresql</artifactId>
++            <version>${postgresql.version}</version>
+         </dependency>
+ 
+         <!--Test-->
