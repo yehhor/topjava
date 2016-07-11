@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 import ru.javawebinar.topjava.model.UserMeal;
-import ru.javawebinar.topjava.web.meal.UserMealRestController;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -23,13 +22,13 @@ import java.util.Objects;
 public class MealServlet extends HttpServlet {
     private static final Logger LOG = LoggerFactory.getLogger(MealServlet.class);
 
-    private UserMealRestController mealController;
+    private MealListController mealController;
 
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
         WebApplicationContext springContext = WebApplicationContextUtils.getRequiredWebApplicationContext(getServletContext());
-        mealController = springContext.getBean(UserMealRestController.class);
+        mealController = springContext.getBean(MealListController.class);
     }
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -42,10 +41,10 @@ public class MealServlet extends HttpServlet {
 
         if (request.getParameter("id").isEmpty()) {
             LOG.info("Create {}", userMeal);
-            mealController.create(userMeal);
+//            mealController.create(userMeal);
         } else {
             LOG.info("Update {}", userMeal);
-            mealController.update(userMeal, getId(request));
+//            mealController.update(userMeal, getId(request));
         }
         response.sendRedirect("meals");
     }
@@ -55,12 +54,12 @@ public class MealServlet extends HttpServlet {
 
         if (action == null) {
             LOG.info("getAll");
-            request.setAttribute("mealList", mealController.getAll());
+//            request.setAttribute("mealList", mealController.getAll());
             request.getRequestDispatcher("mealList.jsp").forward(request, response);
         } else if (action.equals("delete")) {
             int id = getId(request);
             LOG.info("Delete {}", id);
-            mealController.delete(id);
+//            mealController.delete(id);
             response.sendRedirect("meals");
         } else if (action.equals("create") || action.equals("update")) {
             final UserMeal meal = action.equals("create") ?

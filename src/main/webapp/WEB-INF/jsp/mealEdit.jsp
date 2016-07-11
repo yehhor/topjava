@@ -26,10 +26,10 @@
 <body>
 <section>
     <h2><a href="index.html">Home</a></h2>
-    <h3>${param.action == 'create' ? 'Create meal' : 'Edit meal'}</h3>
+    <h3>${requestScope.action == 'create' ? 'Create meal' : 'Edit meal'}</h3>
     <hr>
-    <jsp:useBean id="meal" type="ru.javawebinar.topjava.model.UserMeal" scope="request"/>
-    <form method="post" action="meals">
+    <jsp:useBean id="meal" class="ru.javawebinar.topjava.model.UserMeal" scope="request"/>
+    <form method="post" action="/topjava/meals/edit/${requestScope.action == 'create' ? 'create' : 'update'}">
         <input type="hidden" name="id" value="${meal.id}">
         <dl>
             <dt>DateTime:</dt>
